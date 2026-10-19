@@ -13,6 +13,8 @@ Untuk tes manual: **[panduan Postman dari startup sampai review/recovery](docs/p
 [collection](docs/postman/SilatSense.postman_collection.json), dan
 [environment tanpa secret](docs/postman/SilatSense.local.postman_environment.json).
 
+Deployment: [perbaikan ukuran bundle dan kebutuhan operasional Vercel](docs/vercel-deployment.md).
+
 Backend mandiri hasil pemisahan dari `capstone-prototype` pada 14 Oktober 2026. FastAPI, Python 3.12, SQLAlchemy/Alembic, MySQL 8 (native 8.0/Compose 8.4), OpenCV, dan MediaPipe. Auth, recovery email, profil/katalog, sesi/worker, evaluasi/media, histori dan review Coach tersedia. Bridge auth/keamanan FE terhubung; data latihan FE masih demo.
 
 **Native adalah mode utama untuk aplikasi dan tes. Docker bersifat opsional bila diminta/disepakati.** Fase 6–7 memakai MySQL native sementara terpisah untuk pengujian, tanpa menyalakan Docker.

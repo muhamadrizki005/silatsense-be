@@ -1,0 +1,20 @@
+# Private/local files and development artifacts are not deployment inputs.
+.git/
+.github/
+.venv/
+.cache/
+.data/
+.pytest_cache/
+.ruff_cache/
+**/__pycache__/
+**/*.pyc
+.env
+.env.*
+!.env.example
+datasets/
+artifacts/pose/*.task
+*.db
+*.zip
+tmp/
+tests/
+docs/
