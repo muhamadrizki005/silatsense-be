@@ -1,5 +1,9 @@
 # Fase 3 — upload persisten, sesi, storage dan worker
 
+> Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
+> Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
+> Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).
+
 Dokumen ini merekam hasil Fase 3. Evaluasi/pose/playback/acknowledge/delete
 yang saat itu masih rencana kini tersedia pada Fase 4; status terkini ada di
 [phase4-api.md](phase4-api.md). Contoh null playbackPath di bawah bersifat historis.

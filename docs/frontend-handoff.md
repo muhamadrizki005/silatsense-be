@@ -79,8 +79,15 @@ Semua path berikut setelah `/api/v1`; detail DTO mengikuti OpenAPI.
 | Tindak lanjut | POST `/member/sessions/{sessionId}/follow-ups`; PATCH `/member/follow-up-tasks/{taskId}` |
 | Keamanan email | POST `/auth/email-link/request`, `/auth/email-link/confirm`, `/auth/email-verification/request`, `/auth/email-verification/confirm`, `/auth/password-reset/request`, `/auth/password-reset/confirm` |
 
-Endpoint `/profile`, `/evaluations`, `/coach/members` adalah kompatibilitas
-prototype, dengan shape berbeda. Gunakan kontrak Member/Coach baru untuk fitur baru.
+Alias auth, `/profile`, `/movements`, `/evaluations`, `/coach/members` dan
+penulisan catatan prototype telah dihapus pada 19 Oktober 2026. Gunakan hanya
+kontrak dalam tabel ini; [pemetaan dan bukti](route-cleanup.md). Data historis
+tetap tersedia melalui histori/detail sekarang.
+
+URL halaman FE `/coach/members` boleh tetap digunakan. Itu navigasi halaman,
+bukan endpoint backend. TODO lama di data dummy Coach perlu mengarah ke
+`/coach/roster` ketika fitur tersebut diintegrasikan; belum ada fetch aktif ke
+endpoint Coach prototype dalam kode FE yang diaudit.
 
 ## Alur upload sampai review
 

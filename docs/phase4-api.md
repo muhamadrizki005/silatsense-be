@@ -1,5 +1,9 @@
 # Fase 4 — evaluasi, pose dan media privat
 
+> Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
+> Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
+> Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).
+
 Dokumen ini merekam implementasi Fase 4. Histori/dashboard yang saat itu masih
 rencana kini tersedia pada [Fase 5](phase5-api.md), disusul binaan/review
 [Fase 6](phase6-api.md); head source saat ini 0006.

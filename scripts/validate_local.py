@@ -1,137 +1,143 @@
-"""Local acceptance check with real MediaPipe inference; run against a disposable database.
+"""Manual HTTP acceptance check against an explicitly configured disposable DB.
 
-The video is a repeated dataset image to validate plumbing, NOT model accuracy.
+Start API and worker using that same *_test database first. Supply an owned video;
+this checks application plumbing and never claims scientific model accuracy.
 """
 
-import json
-import secrets
+import argparse
 from pathlib import Path
-import cv2
+import secrets
+import time
+from uuid import uuid4
+
 import httpx
-from PIL import Image, ImageOps
-import numpy as np
-from app.db.session import SessionLocal
-from app.models.entities import User
 from app.core.security import passwords
+from app.db.session import SessionLocal, engine
+from app.models.entities import User
+from app.services.assignments import assign_coach
 
 
 def main():
-    cache = Path(".cache")
-    cache.mkdir(exist_ok=True)
-    source = next(Path("datasets/kuda_kuda/train").glob("*.jpg"))
-    with Image.open(source) as image:
-        image = ImageOps.exif_transpose(image).convert("RGB").rotate(270, expand=True)
-        image.thumbnail((640, 640))
-        w, h = image.size
-        image = image.resize((w // 2 * 2, h // 2 * 2))
-        frame = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2BGR)
-    video_path = cache / "acceptance-video.mp4"
-    writer = cv2.VideoWriter(
-        str(video_path),
-        cv2.VideoWriter_fourcc(*"mp4v"),
-        10,
-        (frame.shape[1], frame.shape[0]),
-    )
-    assert writer.isOpened()
-    for _ in range(20):
-        writer.write(frame)
-    writer.release()
-    suffix = secrets.token_hex(4)
-    password = secrets.token_urlsafe(16)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--video", type=Path, required=True)
+    parser.add_argument("--base-url", default="http://localhost:8001/api/v1")
+    parser.add_argument("--timeout", type=int, default=240)
+    args = parser.parse_args()
+    if not (engine.url.database or "").endswith("_test"):
+        parser.error(
+            "Only a disposable *_test database is allowed; never use development."
+        )
+    if not args.video.is_file() or args.timeout < 1:
+        parser.error("Supply an existing video and a positive timeout.")
+    suffix, password = secrets.token_hex(8), secrets.token_urlsafe(24)
+    member_email = f"member-{suffix}@example.com"
     coach_email = f"coach-{suffix}@example.com"
-    with SessionLocal() as db:
-        db.add(
-            User(
-                name="Pelatih Validasi",
+    with httpx.Client(base_url=args.base_url.rstrip("/") + "/", timeout=60) as client:
+        created = client.post(
+            "auth/sign-up",
+            json={
+                "fullName": "Member Validasi",
+                "identifier": member_email,
+                "password": password,
+            },
+        )
+        created.raise_for_status()
+        auth = created.json()
+        owner_id = int(auth["user"]["id"])
+        member_headers = {"Authorization": "Bearer " + auth["accessToken"]}
+        with SessionLocal() as db:
+            owner = db.get(User, owner_id)
+            if not owner or owner.email != member_email:
+                raise RuntimeError(
+                    "API must use the same disposable database as this CLI."
+                )
+            coach = User(
+                name="Coach Validasi",
                 email=coach_email,
                 role="COACH",
                 password_hash=passwords.hash(password),
             )
-        )
-        db.commit()
-    with httpx.Client(base_url="http://localhost:8000/api/v1", timeout=120) as client:
-        member_email = f"member-{suffix}@example.com"
-        response = client.post(
-            "/auth/register",
-            json={
-                "name": "Pesilat Validasi",
-                "email": member_email,
-                "password": password,
-            },
-        )
-        response.raise_for_status()
-        data = response.json()
-        headers = {"Authorization": "Bearer " + data["access_token"]}
-        assert len(client.get("/movements").json()) == 4
-        checks = []
-        for movement in ["kuda_kuda", "pukulan", "tangkisan", "tendangan"]:
-            with video_path.open("rb") as video:
-                response = client.post(
-                    "/evaluations",
-                    headers=headers,
-                    data={"movement_type": movement},
-                    files={"video": ("acceptance.mp4", video, "video/mp4")},
-                )
-            response.raise_for_status()
-            result = response.json()
-            assert result["pose_status"] == "detected"
-            assert result["analysis"]["frames_processed"] > 0
-            if movement in ["pukulan", "tendangan"]:
-                assert (
-                    result["score"] is None
-                    and result["status"] == "reference_not_ready"
-                )
-            else:
-                assert (
-                    result["score"] is not None and result["status"] == "experimental"
-                )
-            checks.append(
-                {
-                    "movement": movement,
-                    "status": result["status"],
-                    "frames": result["analysis"]["frames_processed"],
-                }
+            db.add(coach)
+            db.commit()
+            coach_id = coach.id
+            assign_coach(
+                db, owner_id, coach_id, "validate-local", "Disposable acceptance run"
             )
-        history = client.get("/evaluations", headers=headers).json()
-        assert len(history) == 4
-        coach = client.post(
-            "/auth/login", json={"email": coach_email, "password": password}
-        ).json()
-        coach_headers = {"Authorization": "Bearer " + coach["access_token"]}
-        evaluation_id = history[-1]["id"]
-        note = client.post(
-            f"/coach/evaluations/{evaluation_id}/notes",
+        catalog = client.get("member/training-modules", headers=member_headers)
+        catalog.raise_for_status()
+        assert len(catalog.json()["modules"]) == 4
+        with args.video.open("rb") as video:
+            accepted = client.post(
+                "member/sessions",
+                headers={
+                    **member_headers,
+                    "Idempotency-Key": str(uuid4()),
+                },
+                data={"movementSlug": "kuda-kuda"},
+                files={"video": (args.video.name, video, "application/octet-stream")},
+            )
+        accepted.raise_for_status()
+        sid = accepted.json()["sessionId"]
+        deadline = time.monotonic() + args.timeout
+        while True:
+            response = client.get(f"member/sessions/{sid}", headers=member_headers)
+            response.raise_for_status()
+            status = response.json()
+            if status["processingStatus"] == "completed":
+                break
+            if status["processingStatus"] == "failed":
+                raise RuntimeError(
+                    "Video processing failed: " + status["error"]["code"]
+                )
+            if time.monotonic() >= deadline:
+                raise TimeoutError(
+                    "Worker did not finish within the acceptance timeout."
+                )
+            time.sleep(2)
+        evaluation = client.get(
+            f"member/sessions/{sid}/evaluation", headers=member_headers
+        )
+        evaluation.raise_for_status()
+        assert evaluation.json()["sessionId"] == sid
+        history = client.get("member/history", headers=member_headers)
+        history.raise_for_status()
+        assert history.json()["items"][0]["session"]["id"] == sid
+        login = client.post(
+            "auth/sign-in", json={"identifier": coach_email, "password": password}
+        )
+        login.raise_for_status()
+        coach_headers = {"Authorization": "Bearer " + login.json()["accessToken"]}
+        draft = client.put(
+            f"coach/sessions/{sid}/feedback-draft",
             headers=coach_headers,
             json={
-                "note": "Catatan uji integrasi. Diskusikan posisi tubuh dengan pelatih."
+                "expectedVersion": 0,
+                "decision": "approved",
+                "note": "Uji alur aplikasi.",
             },
         )
-        note.raise_for_status()
-        assert client.get(f"/evaluations/{evaluation_id}", headers=headers).json()[
-            "coach_notes"
-        ]
-        (cache / "qa.json").write_text(
-            json.dumps(
-                {
-                    "member_email": member_email,
-                    "coach_email": coach_email,
-                    "password": password,
-                    "evaluation_id": evaluation_id,
-                    "member_id": data["user"]["id"],
-                }
-            ),
-            encoding="utf-8",
+        draft.raise_for_status()
+        review = client.post(
+            f"coach/sessions/{sid}/reviews",
+            headers={
+                **coach_headers,
+                "Idempotency-Key": str(uuid4()),
+            },
+            json={
+                "expectedRevision": 0,
+                "expectedDraftVersion": draft.json()["version"],
+            },
         )
-        print(
-            json.dumps(
-                {
-                    "real_inference": checks,
-                    "history_and_coach_note": "passed",
-                    "fixture": "Repeated reference image; not accuracy evidence",
-                },
-                indent=2,
-            )
-        )
+        review.raise_for_status()
+        detail = client.get(f"member/history/{sid}", headers=member_headers)
+        detail.raise_for_status()
+        assert detail.json()["review"]["id"] == review.json()["id"]
+    print(
+        "PASS: sign-up, catalog, queued upload/worker, evaluation, history and Coach review."
+    )
+    print(
+        "Disposable fixtures remain in the *_test schema; no credentials were written to disk."
+    )
 
 
 if __name__ == "__main__":

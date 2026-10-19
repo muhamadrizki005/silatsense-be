@@ -1,5 +1,9 @@
 # Fase 7 — recovery email, bridge auth dan operasi
 
+> Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
+> Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
+> Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).
+
 **Pembaruan native 18 Oktober 2026:** koneksi pengguna ke localhost:3306/silatsense
 berhasil, schema yang belum ada dibuat, upgrade 0007 dan alembic check lulus.
 Empat katalog terisi, tanpa akun/sesi/profil referensi dummy. API readiness,

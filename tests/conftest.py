@@ -58,12 +58,12 @@ def client():
 @pytest.fixture
 def member(client):
     r = client.post(
-        "/api/v1/auth/register",
+        "/api/v1/auth/sign-up",
         json={
-            "name": "Member One",
-            "email": "one@example.com",
+            "fullName": "Member One",
+            "identifier": "one@example.com",
             "password": "password123",
         },
     )
     assert r.status_code == 201
-    return {"Authorization": "Bearer " + r.json()["access_token"]}
+    return {"Authorization": "Bearer " + r.json()["accessToken"]}

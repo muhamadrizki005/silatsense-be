@@ -85,14 +85,16 @@ def member_user(user: User = Depends(current_user)):
 
 def check_origin(request: Request):
     origin = request.headers.get("origin")
-    if origin and origin != settings.frontend_origin:
+    # Swagger runs on the API's own origin, independently of the frontend.
+    api_origin = f"{request.url.scheme}://{request.url.netloc}"
+    if origin and origin not in {settings.frontend_origin, api_origin}:
         raise HTTPException(403, "Origin tidak diizinkan.")
 
 
 def auth_request_rate(request: Request, db: Session = Depends(get_db)):
     from app.services.recovery import rate_limit
     ip = request.client.host if request.client else "unknown"
-    signup = request.url.path.endswith(("/register", "/sign-up"))
+    signup = request.url.path.endswith("/sign-up")
     rate_limit(db, "signup-ip" if signup else "auth-ip", ip,
                settings.signup_ip_requests_per_hour if signup else settings.auth_ip_requests_per_15_minutes,
                3600 if signup else 900)

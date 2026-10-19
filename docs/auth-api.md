@@ -1,8 +1,8 @@
 # Auth API untuk SilatSense FE
 
-Base URL: `http://localhost:8000/api/v1`. Semua body request memakai JSON.
-Endpoint lama `/auth/register`, `/auth/login`, `/auth/me`, dan `/auth/refresh`
-tetap tersedia dengan nama field prototype.
+Base URL: `http://localhost:8001/api/v1`. Semua body request memakai JSON.
+Auth memakai satu kontrak camelCase berikut. Alias prototype telah dihapus
+pada 19 Oktober 2026; lihat [catatan penghapusan](route-cleanup.md).
 
 | Method | Path | Kegunaan |
 | --- | --- | --- |
@@ -29,7 +29,8 @@ ke huruf kecil; spasi di awal/akhir identifier dan nama dihapus. Nama minimal
 Registrasi publik selalu membuat role Member; field tambahan seperti `role`
 ditolak. Akun Coach dibuat melalui script seed yang sudah tersedia.
 Registrasi dengan NPM tidak membuat email fiktif. Satu akun terdaftar dengan
-satu identifier; penautan NPM dan email ke akun yang sama belum tersedia.
+satu identifier; penautan email ke akun NPM tersedia melalui alur reautentikasi
+dan konfirmasi email, bukan PATCH profil biasa.
 
 ## Login
 
@@ -58,9 +59,8 @@ Respons registrasi, login, dan refresh-session mengikuti DTO auth FE:
 
 `role` adalah `member` atau `coach`. `GET /auth/session` mengembalikan objek
 `user` di atas secara langsung, dengan header `Authorization: Bearer <JWT>`.
-Endpoint lama `/auth/me` dan `/profile` tetap mengembalikan `id` numerik,
-`name`, `email`, role huruf besar, dan `created_at`. Untuk akun NPM, `email`
-pada respons lama bernilai `null`.
+Profil lengkap dibaca dari `/member/profile` atau `/coach/profile`, sesuai
+role. Semua ID publik berupa string.
 
 ## Sesi, refresh, dan logout
 
@@ -76,16 +76,16 @@ konfigurasi `COOKIE_SECURE` (aktifkan untuk HTTPS).
 - Logout mencabut refresh token sesi ini. Access token yang sudah diterbitkan
   masih berlaku sampai kedaluwarsa; FE harus menghapus access token saat logout.
 
-Untuk browser, gunakan `credentials: "include"` saat login, registrasi,
-refresh, dan logout. Simpan access token di memori dan gunakan header Bearer
-untuk endpoint terlindungi. Panggil refresh sekali saat sesi perlu dipulihkan;
-hindari refresh paralel memakai cookie yang sama.
+FE sekarang memakai bridge cookie HttpOnly terenkripsi pada server Next.
+Server components membaca sesi; server actions menangani login, refresh dan
+perubahan cookie. Bearer diteruskan per request, tidak ke props/localStorage.
+Refresh/logout meneruskan cookie refresh BE secara eksplisit, dan action
+menangani Set-Cookie upstream. Single-flight per sesi mencegah rotasi paralel;
+lihat [integrasi FE](fe-integration.md). Postman memakai cookie jar langsung.
 
-`FRONTEND_ORIGIN` harus sesuai origin FE. Konfigurasi cookie Strict saat ini
-mendukung development localhost dan deployment FE–BE pada site yang sama.
-Jika FE menggunakan server actions, server FE harus meneruskan cookie request
-ke BE dan meneruskan `Set-Cookie` ke browser dengan path/domain yang sesuai;
-cookie tidak otomatis sampai ke browser dari fetch server.
+FRONTEND_ORIGIN harus sesuai origin FE. Backend juga menerima origin API sendiri
+agar Swagger `/docs` dapat login/mengirim mutasi. Origin lain, termasuk beda
+port atau skema dari origin API, tetap ditolak; tidak memakai wildcard.
 
 ## Error
 
@@ -105,11 +105,11 @@ menyimpan kebijakan persistensi refresh. Untuk environment native:
 ```powershell
 .venv/Scripts/alembic.exe upgrade head
 .venv/Scripts/alembic.exe check
-.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --no-access-log
 ```
 
 Untuk Docker: `docker compose up -d --build --wait`; startup menjalankan migrasi.
-Swagger tersedia di `http://localhost:8000/docs`.
+Swagger tersedia di `http://localhost:8001/docs`.
 Recovery baru tersedia pada Fase 7; lihat tambahan di bawah.
 
 ## Tambahan Fase 2

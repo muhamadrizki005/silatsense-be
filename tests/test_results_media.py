@@ -11,7 +11,7 @@ from app.intelligence.features.biomechanics import BiomechanicalFeatures
 from app.intelligence.preprocessing.landmarks import VisibleLandmarkPreprocessor
 from app.intelligence.features.presentation import measurements, raw_pose
 from app.models.entities import AnalysisJob, CoachNote, EvaluationSession, MediaAsset, TrainingSession, User, now
-from app.repositories.evaluations import EvaluationRepository
+from helpers import save_completed_evaluation
 from app.repositories.jobs import JobRepository
 from app.services.analysis import EvaluationService
 from app.services.cleanup import cleanup_once
@@ -164,25 +164,30 @@ def test_delete_fences_active_worker_and_cleanup_waits_for_reader(client, member
         assert client.get(path + tail, headers=member).status_code == 404
 
 
-def test_delete_completed_retains_audit_hides_legacy_and_statistics(client, member, accepted):
+def test_delete_completed_retains_historical_audit_and_hides_private_results(client, member, accepted):
     path, _, factory = accepted
     finish(factory)
     eid = client.get(path + "/evaluation", headers=member).json()["id"]
     assert client.get("/api/v1/member/profile", headers=member).json()["statistics"]["completedSessionCount"] == 1
-    coach = client.post("/api/v1/auth/login", json={"email": "coach@example.com", "password": "password123"}).json()
-    coach_headers = {"Authorization": "Bearer " + coach["access_token"]}
+    coach = client.post("/api/v1/auth/sign-in", json={"identifier": "coach@example.com", "password": "password123"}).json()
+    coach_headers = {"Authorization": "Bearer " + coach["accessToken"]}
     from app.services.assignments import assign_coach
     with factory() as db:
-        assign_coach(db, db.scalar(select(TrainingSession.user_id)), coach["user"]["id"], "test-admin", "Audit access")
-    assert client.post(f"/api/v1/coach/evaluations/{eid}/notes", headers=coach_headers,
-                       json={"note": "Audit note"}).status_code == 201
+        assign_coach(db, db.scalar(select(TrainingSession.user_id)), int(coach["user"]["id"]), "test-admin", "Audit access")
+    # Historical notes remain readable even though their write route is retired.
+    with factory() as db:
+        db.add(CoachNote(evaluation_id=int(eid), coach_id=int(coach["user"]["id"]), note="Audit note"))
+        db.commit()
+    sid = path.rsplit("/", 1)[-1]
+    detail = client.get(f"/api/v1/member/history/{sid}", headers=member)
+    assert detail.json()["legacyNotes"][0]["text"] == "Audit note"
     assert client.delete(path, headers=member).status_code == 204
-    assert client.get(f"/api/v1/evaluations/{eid}", headers=member).status_code == 404
-    assert client.get("/api/v1/evaluations", headers=member).json() == []
+    assert client.get(f"/api/v1/member/history/{sid}", headers=member).status_code == 404
+    assert client.get("/api/v1/member/history", headers=member).json()["items"] == []
     assert client.post(path + "/acknowledge", headers=member).status_code == 404
-    assert client.get(f"/api/v1/evaluations/{eid}", headers=coach_headers).status_code == 404
-    assert client.post(f"/api/v1/coach/evaluations/{eid}/notes", headers=coach_headers,
-                       json={"note": "After deletion"}).status_code == 404
+    assert client.get(f"/api/v1/coach/sessions/{sid}", headers=coach_headers).status_code == 404
+    assert client.post(f"/api/v1/coach/sessions/{sid}/reviews", headers={**coach_headers, "Idempotency-Key": "deleted-review"},
+                       json={"expectedRevision": 0, "expectedDraftVersion": 1}).status_code == 404
     statistics = client.get("/api/v1/member/profile", headers=member).json()["statistics"]
     assert statistics["completedSessionCount"] == 0 and statistics["totalDurationSeconds"] == 0
     assert cleanup_once(factory) == 1
@@ -196,9 +201,9 @@ def test_delete_completed_retains_audit_hides_legacy_and_statistics(client, memb
 
 def test_legacy_result_missing_raw_data_and_video(client, member, uploads):
     _, factory = uploads
-    owner = client.get("/api/v1/auth/me", headers=member).json()["id"]
+    owner = int(client.get("/api/v1/auth/session", headers=member).json()["id"])
     with factory() as db:
-        row = EvaluationRepository(db).save(owner, analysis_result())
+        row = save_completed_evaluation(db, owner, analysis_result())
         path = f"/api/v1/member/sessions/{row.training_session_id}"
     result = client.get(path + "/evaluation", headers=member)
     assert result.status_code == 200, result.text
@@ -336,8 +341,8 @@ def test_best_frame_measurements_and_pose_match_selected_reference():
 
 def test_video_coach_and_origin_restrictions_and_cors(client, member, accepted):
     path, _, _ = accepted
-    coach = client.post("/api/v1/auth/login", json={"email": "coach@example.com", "password": "password123"}).json()
-    headers = {"Authorization": "Bearer " + coach["access_token"]}
+    coach = client.post("/api/v1/auth/sign-in", json={"identifier": "coach@example.com", "password": "password123"}).json()
+    headers = {"Authorization": "Bearer " + coach["accessToken"]}
     assert client.get(path + "/video", headers=headers).status_code == 403
     assert client.delete(path, headers={**member, "Origin": "https://evil.example"}).status_code == 403
     from app.core.config import settings

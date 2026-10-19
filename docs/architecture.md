@@ -1,5 +1,9 @@
 # Arsitektur, baseline dan status implementasi SilatSense
 
+> Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
+> Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
+> Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).
+
 Tanggal status: 18 Oktober 2026. **Fase 1 dokumentasi; Fase 2–7 sudah diimplementasikan.**
 Head source `0007`: profil/katalog/password, upload persisten, storage, job,
 worker dan cleanup. Evaluasi/pose/measurements, playback Range privat,

@@ -1,10 +1,10 @@
 import json
 import math
 from pathlib import Path
-from sqlalchemy import select, or_
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.core.config import settings
-from app.models.entities import ReferenceProfile, EvaluationSession, EvaluationIssue, TrainingSession, now
+from app.models.entities import ReferenceProfile, EvaluationSession, EvaluationIssue
 from app.intelligence.contracts import FEATURE_VERSION
 
 
@@ -69,50 +69,3 @@ class EvaluationRepository:
         row.issues = [EvaluationIssue(**issue) for issue in result["issues"]]
         self.db.add(row)
         return row
-
-    def save(self, user_id: int, result: dict):
-        # Legacy synchronous endpoint keeps its DTO, but links every new result.
-        timestamp = now()
-        session = TrainingSession(user_id=user_id, movement=result["movement"],
-                                  processing_status="completed", created_at=timestamp, completed_at=timestamp)
-        self.db.add(session)
-        self.db.flush()
-        row = self.build(user_id, result, session.id)
-        self.db.commit()
-        self.db.refresh(row)
-        return row
-
-    def history(self, user_id: int, offset: int, limit: int):
-        return self.db.scalars(
-            select(EvaluationSession)
-            .outerjoin(TrainingSession, TrainingSession.id == EvaluationSession.training_session_id)
-            .where(EvaluationSession.user_id == user_id,
-                   or_(EvaluationSession.training_session_id.is_(None), TrainingSession.deleted_at.is_(None)))
-            .order_by(EvaluationSession.created_at.desc(), EvaluationSession.id.desc())
-            .offset(offset)
-            .limit(limit)
-        ).all()
-
-
-def is_deleted(db, row):
-    if row.training_session_id is None:
-        return False
-    session = db.get(TrainingSession, row.training_session_id)
-    return session is not None and session.deleted_at is not None
-
-
-def serialize(row: EvaluationSession):
-    return {
-        **row.result_json,
-        "id": row.id,
-        "created_at": row.created_at.isoformat() + "Z",
-        "coach_notes": [
-            {
-                "id": n.id,
-                "coach_name": n.coach.name,
-                "note": n.note,
-                "created_at": n.created_at.isoformat() + "Z",
-            }
-            for n in row.notes
-        ],
-    }

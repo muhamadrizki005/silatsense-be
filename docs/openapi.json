@@ -142,63 +142,6 @@
         "title": "AnalysisIssue",
         "type": "object"
       },
-      "AnalysisOut": {
-        "properties": {
-          "features_compared": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Features Compared"
-          },
-          "frames_processed": {
-            "title": "Frames Processed",
-            "type": "integer"
-          },
-          "key_frame": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Key Frame"
-          },
-          "key_frame_time": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Key Frame Time"
-          },
-          "method": {
-            "default": "static-reference-pose",
-            "title": "Method",
-            "type": "string"
-          },
-          "valid_pose_frames": {
-            "title": "Valid Pose Frames",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "frames_processed",
-          "valid_pose_frames",
-          "key_frame"
-        ],
-        "title": "AnalysisOut",
-        "type": "object"
-      },
       "AuthTokens": {
         "properties": {
           "accessToken": {
@@ -289,25 +232,6 @@
           "status"
         ],
         "title": "BodyAssessment",
-        "type": "object"
-      },
-      "Body_evaluate_api_v1_evaluations_post": {
-        "properties": {
-          "movement_type": {
-            "title": "Movement Type",
-            "type": "string"
-          },
-          "video": {
-            "contentMediaType": "application/octet-stream",
-            "title": "Video",
-            "type": "string"
-          }
-        },
-        "required": [
-          "movement_type",
-          "video"
-        ],
-        "title": "Body_evaluate_api_v1_evaluations_post",
         "type": "object"
       },
       "Body_upload_session_api_v1_member_sessions_post": {
@@ -522,7 +446,7 @@
           "evaluation": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/app__schemas__results__EvaluationOut"
+                "$ref": "#/components/schemas/EvaluationOut"
               },
               {
                 "type": "null"
@@ -581,27 +505,6 @@
           "feedbackDraft"
         ],
         "title": "CoachSessionDetail",
-        "type": "object"
-      },
-      "Credentials": {
-        "properties": {
-          "email": {
-            "format": "email",
-            "title": "Email",
-            "type": "string"
-          },
-          "password": {
-            "maxLength": 128,
-            "minLength": 8,
-            "title": "Password",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password"
-        ],
-        "title": "Credentials",
         "type": "object"
       },
       "DailyActivity": {
@@ -892,6 +795,206 @@
         "title": "EmailLinkRequest",
         "type": "object"
       },
+      "EvaluationOut": {
+        "additionalProperties": false,
+        "properties": {
+          "analysisStatus": {
+            "enum": [
+              "experimental",
+              "reference_not_ready",
+              "insufficient_pose",
+              "insufficient_features"
+            ],
+            "title": "Analysisstatus",
+            "type": "string"
+          },
+          "analyzerVersion": {
+            "title": "Analyzerversion",
+            "type": "string"
+          },
+          "deviatedRepetitions": {
+            "title": "Deviatedrepetitions",
+            "type": "null"
+          },
+          "evaluatedAt": {
+            "format": "date-time",
+            "title": "Evaluatedat",
+            "type": "string"
+          },
+          "featureVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Featureversion"
+          },
+          "featuresCompared": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Featurescompared"
+          },
+          "framesProcessed": {
+            "title": "Framesprocessed",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/AnalysisIssue"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "keyFrame": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KeyFrame"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "matchedVariant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Matchedvariant"
+          },
+          "measurements": {
+            "items": {
+              "$ref": "#/components/schemas/Measurement"
+            },
+            "title": "Measurements",
+            "type": "array"
+          },
+          "method": {
+            "const": "static-reference-pose",
+            "default": "static-reference-pose",
+            "title": "Method",
+            "type": "string"
+          },
+          "movementSlug": {
+            "enum": [
+              "kuda-kuda",
+              "pukulan",
+              "tangkisan",
+              "tendangan"
+            ],
+            "title": "Movementslug",
+            "type": "string"
+          },
+          "poseStatus": {
+            "enum": [
+              "detected",
+              "not_detected"
+            ],
+            "title": "Posestatus",
+            "type": "string"
+          },
+          "referenceVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referenceversion"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "scoreReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scorereason"
+          },
+          "scoreUnit": {
+            "const": "similarity_points",
+            "default": "similarity_points",
+            "title": "Scoreunit",
+            "type": "string"
+          },
+          "sessionId": {
+            "title": "Sessionid",
+            "type": "string"
+          },
+          "unavailableReasons": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unavailablereasons",
+            "type": "array"
+          },
+          "validPoseFrames": {
+            "title": "Validposeframes",
+            "type": "integer"
+          },
+          "validRepetitions": {
+            "title": "Validrepetitions",
+            "type": "null"
+          }
+        },
+        "required": [
+          "id",
+          "sessionId",
+          "movementSlug",
+          "evaluatedAt",
+          "analysisStatus",
+          "score",
+          "scoreReason",
+          "matchedVariant",
+          "analyzerVersion",
+          "featureVersion",
+          "referenceVersion",
+          "poseStatus",
+          "framesProcessed",
+          "validPoseFrames",
+          "featuresCompared",
+          "keyFrame",
+          "measurements",
+          "issues",
+          "unavailableReasons"
+        ],
+        "title": "EvaluationOut",
+        "type": "object"
+      },
       "GuideItem": {
         "additionalProperties": false,
         "properties": {
@@ -1029,44 +1132,6 @@
           "sessionCount"
         ],
         "title": "IssueCount",
-        "type": "object"
-      },
-      "IssueOut": {
-        "properties": {
-          "body_part": {
-            "title": "Body Part",
-            "type": "string"
-          },
-          "deviation": {
-            "title": "Deviation",
-            "type": "number"
-          },
-          "feature": {
-            "title": "Feature",
-            "type": "string"
-          },
-          "feedback": {
-            "title": "Feedback",
-            "type": "string"
-          },
-          "severity": {
-            "enum": [
-              "low",
-              "medium",
-              "high"
-            ],
-            "title": "Severity",
-            "type": "string"
-          }
-        },
-        "required": [
-          "body_part",
-          "feature",
-          "deviation",
-          "severity",
-          "feedback"
-        ],
-        "title": "IssueOut",
         "type": "object"
       },
       "KeyFrame": {
@@ -1368,97 +1433,6 @@
         "title": "MemberProfilePatch",
         "type": "object"
       },
-      "ModelOut": {
-        "properties": {
-          "analyzer_version": {
-            "title": "Analyzer Version",
-            "type": "string"
-          },
-          "reference_version": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reference Version"
-          }
-        },
-        "required": [
-          "analyzer_version",
-          "reference_version"
-        ],
-        "title": "ModelOut",
-        "type": "object"
-      },
-      "MovementOut": {
-        "properties": {
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "reference_ready": {
-            "title": "Reference Ready",
-            "type": "boolean"
-          },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          }
-        },
-        "required": [
-          "slug",
-          "name",
-          "reference_ready"
-        ],
-        "title": "MovementOut",
-        "type": "object"
-      },
-      "NoteCreate": {
-        "properties": {
-          "note": {
-            "maxLength": 5000,
-            "minLength": 1,
-            "title": "Note",
-            "type": "string"
-          }
-        },
-        "required": [
-          "note"
-        ],
-        "title": "NoteCreate",
-        "type": "object"
-      },
-      "NoteOut": {
-        "properties": {
-          "coach_name": {
-            "title": "Coach Name",
-            "type": "string"
-          },
-          "created_at": {
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
-          "note": {
-            "title": "Note",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "coach_name",
-          "note",
-          "created_at"
-        ],
-        "title": "NoteOut",
-        "type": "object"
-      },
       "PasswordChange": {
         "additionalProperties": false,
         "examples": [
@@ -1740,22 +1714,6 @@
         "title": "ProfileOut",
         "type": "object"
       },
-      "ProfilePatch": {
-        "additionalProperties": false,
-        "properties": {
-          "name": {
-            "maxLength": 120,
-            "minLength": 2,
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "title": "ProfilePatch",
-        "type": "object"
-      },
       "PublishInput": {
         "additionalProperties": false,
         "properties": {
@@ -1910,35 +1868,6 @@
           }
         },
         "title": "RecoveryAccepted",
-        "type": "object"
-      },
-      "Register": {
-        "additionalProperties": false,
-        "properties": {
-          "email": {
-            "format": "email",
-            "title": "Email",
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 120,
-            "minLength": 2,
-            "title": "Name",
-            "type": "string"
-          },
-          "password": {
-            "maxLength": 128,
-            "minLength": 8,
-            "title": "Password",
-            "type": "string"
-          }
-        },
-        "required": [
-          "email",
-          "password",
-          "name"
-        ],
-        "title": "Register",
         "type": "object"
       },
       "ResetConfirm": {
@@ -2117,7 +2046,7 @@
           "evaluation": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/app__schemas__results__EvaluationOut"
+                "$ref": "#/components/schemas/EvaluationOut"
               },
               {
                 "type": "null"
@@ -2559,29 +2488,6 @@
         "title": "TokenConfirm",
         "type": "object"
       },
-      "TokenOut": {
-        "properties": {
-          "access_token": {
-            "title": "Access Token",
-            "type": "string"
-          },
-          "token_type": {
-            "const": "bearer",
-            "title": "Token Type",
-            "type": "string"
-          },
-          "user": {
-            "$ref": "#/components/schemas/UserOut"
-          }
-        },
-        "required": [
-          "access_token",
-          "token_type",
-          "user"
-        ],
-        "title": "TokenOut",
-        "type": "object"
-      },
       "TrainingCatalog": {
         "additionalProperties": false,
         "properties": {
@@ -2758,51 +2664,6 @@
         "title": "UploadConfig",
         "type": "object"
       },
-      "UserOut": {
-        "properties": {
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Email"
-          },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "role": {
-            "enum": [
-              "MEMBER",
-              "COACH"
-            ],
-            "title": "Role",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "email",
-          "role",
-          "created_at"
-        ],
-        "title": "UserOut",
-        "type": "object"
-      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -2860,309 +2721,6 @@
           "message"
         ],
         "title": "ValidationIssue",
-        "type": "object"
-      },
-      "app__schemas__api__EvaluationOut": {
-        "properties": {
-          "analysis": {
-            "$ref": "#/components/schemas/AnalysisOut"
-          },
-          "coach_notes": {
-            "items": {
-              "$ref": "#/components/schemas/NoteOut"
-            },
-            "title": "Coach Notes",
-            "type": "array"
-          },
-          "created_at": {
-            "title": "Created At",
-            "type": "string"
-          },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
-          "issues": {
-            "items": {
-              "$ref": "#/components/schemas/IssueOut"
-            },
-            "title": "Issues",
-            "type": "array"
-          },
-          "matched_variant": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Matched Variant"
-          },
-          "model": {
-            "$ref": "#/components/schemas/ModelOut"
-          },
-          "movement": {
-            "title": "Movement",
-            "type": "string"
-          },
-          "pose_status": {
-            "enum": [
-              "detected",
-              "not_detected"
-            ],
-            "title": "Pose Status",
-            "type": "string"
-          },
-          "reference_profile_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reference Profile Id"
-          },
-          "score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Score"
-          },
-          "status": {
-            "enum": [
-              "experimental",
-              "reference_not_ready",
-              "insufficient_pose",
-              "insufficient_features"
-            ],
-            "title": "Status",
-            "type": "string"
-          }
-        },
-        "required": [
-          "id",
-          "movement",
-          "matched_variant",
-          "reference_profile_id",
-          "score",
-          "status",
-          "pose_status",
-          "analysis",
-          "issues",
-          "model",
-          "created_at",
-          "coach_notes"
-        ],
-        "title": "EvaluationOut",
-        "type": "object"
-      },
-      "app__schemas__results__EvaluationOut": {
-        "additionalProperties": false,
-        "properties": {
-          "analysisStatus": {
-            "enum": [
-              "experimental",
-              "reference_not_ready",
-              "insufficient_pose",
-              "insufficient_features"
-            ],
-            "title": "Analysisstatus",
-            "type": "string"
-          },
-          "analyzerVersion": {
-            "title": "Analyzerversion",
-            "type": "string"
-          },
-          "deviatedRepetitions": {
-            "title": "Deviatedrepetitions",
-            "type": "null"
-          },
-          "evaluatedAt": {
-            "format": "date-time",
-            "title": "Evaluatedat",
-            "type": "string"
-          },
-          "featureVersion": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Featureversion"
-          },
-          "featuresCompared": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Featurescompared"
-          },
-          "framesProcessed": {
-            "title": "Framesprocessed",
-            "type": "integer"
-          },
-          "id": {
-            "title": "Id",
-            "type": "string"
-          },
-          "issues": {
-            "items": {
-              "$ref": "#/components/schemas/AnalysisIssue"
-            },
-            "title": "Issues",
-            "type": "array"
-          },
-          "keyFrame": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/KeyFrame"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "matchedVariant": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Matchedvariant"
-          },
-          "measurements": {
-            "items": {
-              "$ref": "#/components/schemas/Measurement"
-            },
-            "title": "Measurements",
-            "type": "array"
-          },
-          "method": {
-            "const": "static-reference-pose",
-            "default": "static-reference-pose",
-            "title": "Method",
-            "type": "string"
-          },
-          "movementSlug": {
-            "enum": [
-              "kuda-kuda",
-              "pukulan",
-              "tangkisan",
-              "tendangan"
-            ],
-            "title": "Movementslug",
-            "type": "string"
-          },
-          "poseStatus": {
-            "enum": [
-              "detected",
-              "not_detected"
-            ],
-            "title": "Posestatus",
-            "type": "string"
-          },
-          "referenceVersion": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Referenceversion"
-          },
-          "score": {
-            "anyOf": [
-              {
-                "maximum": 100.0,
-                "minimum": 0.0,
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Score"
-          },
-          "scoreReason": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scorereason"
-          },
-          "scoreUnit": {
-            "const": "similarity_points",
-            "default": "similarity_points",
-            "title": "Scoreunit",
-            "type": "string"
-          },
-          "sessionId": {
-            "title": "Sessionid",
-            "type": "string"
-          },
-          "unavailableReasons": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Unavailablereasons",
-            "type": "array"
-          },
-          "validPoseFrames": {
-            "title": "Validposeframes",
-            "type": "integer"
-          },
-          "validRepetitions": {
-            "title": "Validrepetitions",
-            "type": "null"
-          }
-        },
-        "required": [
-          "id",
-          "sessionId",
-          "movementSlug",
-          "evaluatedAt",
-          "analysisStatus",
-          "score",
-          "scoreReason",
-          "matchedVariant",
-          "analyzerVersion",
-          "featureVersion",
-          "referenceVersion",
-          "poseStatus",
-          "framesProcessed",
-          "validPoseFrames",
-          "featuresCompared",
-          "keyFrame",
-          "measurements",
-          "issues",
-          "unavailableReasons"
-        ],
-        "title": "EvaluationOut",
         "type": "object"
       }
     },
@@ -3349,47 +2907,6 @@
         ]
       }
     },
-    "/api/v1/auth/login": {
-      "post": {
-        "operationId": "login_api_v1_auth_login_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Credentials"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Login",
-        "tags": [
-          "Authentication"
-        ]
-      }
-    },
     "/api/v1/auth/logout": {
       "post": {
         "operationId": "logout_api_v1_auth_logout_post",
@@ -3399,32 +2916,6 @@
           }
         },
         "summary": "Logout",
-        "tags": [
-          "Authentication"
-        ]
-      }
-    },
-    "/api/v1/auth/me": {
-      "get": {
-        "operationId": "me_api_v1_auth_me_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Me",
         "tags": [
           "Authentication"
         ]
@@ -3505,27 +2996,6 @@
         ]
       }
     },
-    "/api/v1/auth/refresh": {
-      "post": {
-        "operationId": "refresh_api_v1_auth_refresh_post",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Refresh",
-        "tags": [
-          "Authentication"
-        ]
-      }
-    },
     "/api/v1/auth/refresh-session": {
       "post": {
         "operationId": "refresh_api_v1_auth_refresh_session_post",
@@ -3542,47 +3012,6 @@
           }
         },
         "summary": "Refresh",
-        "tags": [
-          "Authentication"
-        ]
-      }
-    },
-    "/api/v1/auth/register": {
-      "post": {
-        "operationId": "register_api_v1_auth_register_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Register"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Register",
         "tags": [
           "Authentication"
         ]
@@ -3693,249 +3122,6 @@
         "summary": "Sign Up",
         "tags": [
           "Authentication"
-        ]
-      }
-    },
-    "/api/v1/coach/evaluations/{evaluation_id}/notes": {
-      "post": {
-        "operationId": "note_api_v1_coach_evaluations__evaluation_id__notes_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "evaluation_id",
-            "required": true,
-            "schema": {
-              "title": "Evaluation Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NoteCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NoteOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Note",
-        "tags": [
-          "Coach"
-        ]
-      }
-    },
-    "/api/v1/coach/members": {
-      "get": {
-        "operationId": "members_api_v1_coach_members_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 20,
-              "maximum": 100,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/UserOut"
-                  },
-                  "title": "Response Members Api V1 Coach Members Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Members",
-        "tags": [
-          "Coach"
-        ]
-      }
-    },
-    "/api/v1/coach/members/{member_id}": {
-      "get": {
-        "operationId": "member_api_v1_coach_members__member_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "member_id",
-            "required": true,
-            "schema": {
-              "title": "Member Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Member",
-        "tags": [
-          "Coach"
-        ]
-      }
-    },
-    "/api/v1/coach/members/{member_id}/evaluations": {
-      "get": {
-        "operationId": "member_history_api_v1_coach_members__member_id__evaluations_get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "member_id",
-            "required": true,
-            "schema": {
-              "title": "Member Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 20,
-              "maximum": 100,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/app__schemas__api__EvaluationOut"
-                  },
-                  "title": "Response Member History Api V1 Coach Members  Member Id  Evaluations Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Member History",
-        "tags": [
-          "Coach"
         ]
       }
     },
@@ -5401,162 +4587,6 @@
         ]
       }
     },
-    "/api/v1/evaluations": {
-      "get": {
-        "operationId": "history_api_v1_evaluations_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "offset",
-            "required": false,
-            "schema": {
-              "default": 0,
-              "minimum": 0,
-              "title": "Offset",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "required": false,
-            "schema": {
-              "default": 20,
-              "maximum": 100,
-              "minimum": 1,
-              "title": "Limit",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/app__schemas__api__EvaluationOut"
-                  },
-                  "title": "Response History Api V1 Evaluations Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "History",
-        "tags": [
-          "Evaluations"
-        ]
-      },
-      "post": {
-        "operationId": "evaluate_api_v1_evaluations_post",
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_evaluate_api_v1_evaluations_post"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/app__schemas__api__EvaluationOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Evaluate",
-        "tags": [
-          "Evaluations"
-        ]
-      }
-    },
-    "/api/v1/evaluations/{evaluation_id}": {
-      "get": {
-        "operationId": "detail_api_v1_evaluations__evaluation_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "evaluation_id",
-            "required": true,
-            "schema": {
-              "title": "Evaluation Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/app__schemas__api__EvaluationOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Detail",
-        "tags": [
-          "Evaluations"
-        ]
-      }
-    },
     "/api/v1/member/dashboard": {
       "get": {
         "operationId": "dashboard_api_v1_member_dashboard_get",
@@ -6999,7 +6029,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__results__EvaluationOut"
+                  "$ref": "#/components/schemas/EvaluationOut"
                 }
               }
             },
@@ -7771,101 +6801,6 @@
         "summary": "Prep",
         "tags": [
           "Training catalog"
-        ]
-      }
-    },
-    "/api/v1/movements": {
-      "get": {
-        "operationId": "movements_api_v1_movements_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/MovementOut"
-                  },
-                  "title": "Response Movements Api V1 Movements Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Movements",
-        "tags": [
-          "Movements"
-        ]
-      }
-    },
-    "/api/v1/profile": {
-      "get": {
-        "operationId": "me_api_v1_profile_get",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Me",
-        "tags": [
-          "Profile"
-        ]
-      },
-      "patch": {
-        "operationId": "profile_api_v1_profile_patch",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProfilePatch"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "summary": "Profile",
-        "tags": [
-          "Profile"
         ]
       }
     },

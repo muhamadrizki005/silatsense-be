@@ -17,7 +17,7 @@ from app.schemas.sessions import AcceptedSession, MediaOut, SessionFailure, Sess
 from app.services.probe import probe_video
 from app.services.storage import LocalStorage
 from app.services.training import required_movement
-from app.services.uploads import ALLOWED
+from app.services.video import ALLOWED
 
 FAILURES = {
     "media_expired": "Masa simpan video telah berakhir.",

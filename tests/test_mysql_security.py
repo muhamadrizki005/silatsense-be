@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
-from app.api import routes
+from app.api import auth as routes
 from app.db.session import get_db
 from app.main import app
 from app.models.entities import RefreshToken, User

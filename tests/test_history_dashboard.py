@@ -19,7 +19,7 @@ def history_data(client, member, tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "media_root", str(tmp_path / "private"))
     monkeypatch.setattr("app.services.history.now", lambda: datetime(2026, 10, 18, 12))
     factory = contextmanager(app.dependency_overrides[get_db])
-    owner = int(client.get("/api/v1/auth/me", headers=member).json()["id"])
+    owner = int(client.get("/api/v1/auth/session", headers=member).json()["id"])
     def create(*, movement="pukulan", state="completed", created=None, completed=None,
                score=None, feature_version="image-plane-v1", reference_version="ref-v1",
                method="static-reference-pose", duration=None, deleted=False, user_id=None):
@@ -284,8 +284,8 @@ def test_owner_role_deleted_and_invalid_id_protection(client, member, history_da
     assert client.get("/api/v1/member/history", headers=auth).json()["items"] == []
     assert client.get("/api/v1/member/dashboard", headers=auth).json()["statistics"]["completedSessionCount"] == 0
     assert client.get(f"/api/v1/member/history/{sid}", headers=auth).status_code == 404
-    coach = client.post("/api/v1/auth/login", json={"email": "coach@example.com", "password": "password123"}).json()
-    coach_auth = {"Authorization": "Bearer " + coach["access_token"]}
+    coach = client.post("/api/v1/auth/sign-in", json={"identifier": "coach@example.com", "password": "password123"}).json()
+    coach_auth = {"Authorization": "Bearer " + coach["accessToken"]}
     for path in ("/api/v1/member/history", "/api/v1/member/dashboard", f"/api/v1/member/history/{sid}"):
         assert client.get(path).status_code == 401
         assert client.get(path, headers=coach_auth).status_code == 403

@@ -11,7 +11,7 @@ from app.core.security import passwords
 from app.db.session import get_db
 from app.main import app
 from app.models.entities import AssignmentEvent, CoachAssignment, FeedbackDraft, FollowUpTask, IdempotencyRecord, MediaAsset, ReviewRevision, TrainingSession, User, now
-from app.repositories.evaluations import EvaluationRepository
+from helpers import save_completed_evaluation
 from app.services.assignments import assign_coach
 from app.services.media import stream_chunks
 from test_sessions_jobs import analysis_result
@@ -22,18 +22,18 @@ def coaching(client, member, tmp_path, monkeypatch):
     from app.core.config import settings
     monkeypatch.setattr(settings, "media_root", str(tmp_path))
     factory = contextmanager(app.dependency_overrides[get_db])
-    owner = client.get("/api/v1/auth/me", headers=member).json()["id"]
-    coach = client.post("/api/v1/auth/login", json={"email": "coach@example.com", "password": "password123"}).json()
+    owner = int(client.get("/api/v1/auth/session", headers=member).json()["id"])
+    coach = client.post("/api/v1/auth/sign-in", json={"identifier": "coach@example.com", "password": "password123"}).json()
     with factory() as db:
         second = User(name="Second Coach", email="second@example.com", role="COACH", password_hash=passwords.hash("password123"))
         db.add(second)
         db.commit()
         second_id = second.id
-        row = EvaluationRepository(db).save(owner, analysis_result())
+        row = save_completed_evaluation(db, owner, analysis_result())
         sid, eid = row.training_session_id, row.id
-    auth2 = client.post("/api/v1/auth/login", json={"email": "second@example.com", "password": "password123"}).json()
-    return dict(factory=factory, owner=owner, sid=sid, eid=eid, first=coach["user"]["id"], second=second_id,
-        coach={"Authorization": "Bearer " + coach["access_token"]}, coach2={"Authorization": "Bearer " + auth2["access_token"]})
+    auth2 = client.post("/api/v1/auth/sign-in", json={"identifier": "second@example.com", "password": "password123"}).json()
+    return dict(factory=factory, owner=owner, sid=sid, eid=eid, first=int(coach["user"]["id"]), second=second_id,
+        coach={"Authorization": "Bearer " + coach["accessToken"]}, coach2={"Authorization": "Bearer " + auth2["accessToken"]})
 
 
 def assign(ctx, coach=None):
@@ -54,24 +54,21 @@ def publish(client, ctx, auth=None, revision=0, version=1, key="review-1"):
         json={"expectedRevision": revision, "expectedDraftVersion": version})
 
 
-def test_unassigned_coach_cannot_read_any_new_or_legacy_objects(client, member, coaching):
+def test_unassigned_coach_cannot_read_private_objects(client, member, coaching):
     c = coaching
     paths = [f"/api/v1/coach/roster/{c['owner']}", f"/api/v1/coach/roster/{c['owner']}/sessions",
         f"/api/v1/coach/sessions/{c['sid']}", f"/api/v1/coach/sessions/{c['sid']}/pose",
-        f"/api/v1/coach/sessions/{c['sid']}/video", f"/api/v1/coach/members/{c['owner']}",
-        f"/api/v1/coach/members/{c['owner']}/evaluations", f"/api/v1/evaluations/{c['eid']}"]
+        f"/api/v1/coach/sessions/{c['sid']}/video"]
     for path in paths:
         result=client.get(path, headers=c["coach"])
         assert result.status_code == 404, path
         assert result.headers["cache-control"] == "no-store"
-    assert client.get("/api/v1/coach/members", headers=c["coach"]).json() == []
     assert client.get("/api/v1/coach/roster", headers=c["coach"]).json() == {"items": [], "nextCursor": None}
     empty = client.get("/api/v1/coach/overview", headers=c["coach"])
     assert empty.status_code == 200, empty.text
     assert empty.json()["memberCount"] == empty.json()["reviewQueueCount"] == 0
     assert empty.json()["recentSessions"] == empty.json()["topIssues"] == []
     assert draft(client, c).status_code == 404 and publish(client, c).status_code == 404
-    assert client.post(f"/api/v1/coach/evaluations/{c['eid']}/notes", headers=c["coach"], json={"note": "No access"}).status_code == 404
     profile = client.get("/api/v1/member/profile", headers=member).json()
     assert profile["coach"] is None
     assert client.get(f"/api/v1/member/history/{c['sid']}", headers=member).status_code == 200
@@ -83,7 +80,7 @@ def test_assignment_transfer_revoke_and_unique_member_history(client, member, co
     assert assign(c) is None
     assert client.get("/api/v1/member/profile", headers=member).json()["coach"]["id"] == str(c["first"])
     assert client.get("/api/v1/coach/profile",headers=c["coach"]).json()["statistics"]["completedSessionCount"] == 1
-    assert client.get(f"/api/v1/coach/members/{c['owner']}", headers=c["coach"]).status_code == 200
+    assert client.get(f"/api/v1/coach/roster/{c['owner']}", headers=c["coach"]).status_code == 200
     assign(c, c["second"])
     assert client.get("/api/v1/coach/profile",headers=c["coach"]).json()["statistics"]["completedSessionCount"] == 0
     assert client.get(f"/api/v1/coach/sessions/{c['sid']}", headers=c["coach"]).status_code == 404

@@ -1,5 +1,9 @@
 # Fase 5 — histori dan dashboard Member
 
+> Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
+> Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
+> Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).
+
 Dokumen ini merekam Fase 5. Binaan, review/tugas dan Coach profile statistics
 yang saat itu belum tersedia kini diimplementasikan pada [Fase 6](phase6-api.md).
 Head source terkini 0006; nullable/kosong dalam contoh Fase 5 bukan pembatasan

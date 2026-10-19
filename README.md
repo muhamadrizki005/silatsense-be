@@ -1,5 +1,12 @@
 # SilatSense Backend
 
+**Pembaruan 19 Oktober 2026:** route/schema HTTP prototype yang sudah punya
+pengganti telah dihapus. Auth hanya memakai sign-up/sign-in/session/refresh-session/logout;
+profil, katalog, sesi dan binaan memakai kontrak Member/Coach. Data existing tetap
+dipertahankan. [Pemetaan dan pengujian](docs/route-cleanup.md).
+Regresi pembersihan: SQLite **212 passed/18 skipped**, MySQL native terisolasi
+**230 passed**, dan `alembic check` development lulus.
+
 Untuk tim frontend: **[panduan serah terima dan prioritas integrasi](docs/frontend-handoff.md)**.
 
 Untuk tes manual: **[panduan Postman dari startup sampai review/recovery](docs/postman-guide.md)**,
@@ -175,12 +182,15 @@ Jalankan tes di atas pada terminal tes khusus. Pada checkout baru buat folder `.
 
 Database development native kini sudah pada head **`0007`** dan `alembic check` lulus. Password akun MySQL tidak direset/diubah. Jalankan tes pada database disposable, bukan schema development. Docker tetap opsional.
 
-`scripts.validate_local` membuat akun/data uji dan membutuhkan dataset privat `datasets/kuda_kuda/train`; jalankan hanya pada database pengujian disposable. Dataset mentah tidak disalin dalam pemisahan ini. Jangan mengarahkan tes destruktif ke database development.
+`scripts.validate_local --video <video-uji>` memakai alur sesi/worker/review sekarang
+dan hanya mengizinkan database `*_test`. API serta worker harus memakai database
+disposable yang sama. Script tidak membutuhkan dataset privat dan tidak menulis
+password/token ke disk. Jangan mengarahkannya ke database development.
 
 ## Struktur
 
 Kontrak autentikasi untuk frontend (NPM/email, login, sesi, refresh, logout):
-lihat [docs/auth-api.md](docs/auth-api.md). Endpoint prototype tetap tersedia.
+lihat [docs/auth-api.md](docs/auth-api.md). Alias prototype sudah dihapus.
 
 - `app/api`, `schemas`, `core`: endpoint, kontrak, konfigurasi, autentikasi.
 - `app/db`, `models`, `repositories`: persistensi database.
@@ -192,6 +202,6 @@ lihat [docs/auth-api.md](docs/auth-api.md). Endpoint prototype tetap tersedia.
 
 ## Batas kemampuan aktual
 
-Skor merupakan kemiripan pose eksperimen terhadap referensi, bukan akurasi atau standar kelulusan IPSI. Kuda-kuda dan tangkisan memiliki referensi; pukulan/tendangan menghasilkan `reference_not_ready` tanpa skor. Endpoint prototype `/evaluations` tetap sinkron dan membersihkan video langsung; endpoint sesi baru menyimpan video privat 24 jam dan memakai worker. Playback privat dan data keyframe tersedia sejak Fase 4. Belum ada penghitungan repetisi atau analisis urutan gerak. Detail ada di [docs/evaluation-method.md](docs/evaluation-method.md).
+Skor merupakan kemiripan pose eksperimen terhadap referensi, bukan akurasi atau standar kelulusan IPSI. Kuda-kuda dan tangkisan memiliki referensi; pukulan/tendangan menghasilkan `reference_not_ready` tanpa skor. Upload hanya melalui endpoint sesi: video privat 24 jam dan analisis melalui worker. Playback privat dan data keyframe tersedia sejak Fase 4. Belum ada penghitungan repetisi atau analisis urutan gerak. Detail ada di [docs/evaluation-method.md](docs/evaluation-method.md).
 
-Histori/dashboard Member tersedia sejak Fase 5; scope binaan Coach, review berversi dan tugas tersedia sejak Fase 6, termasuk pembatasan endpoint prototype. Recovery email/bridge auth tetap Fase 7. FE masih dummy/stub dan belum dihubungkan.
+Histori/dashboard Member tersedia sejak Fase 5; scope binaan Coach, review berversi dan tugas tersedia sejak Fase 6, dengan akses hanya untuk binaan aktif. Recovery email/bridge auth tetap Fase 7. FE masih dummy/stub dan belum dihubungkan.

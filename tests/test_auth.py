@@ -18,6 +18,31 @@ def signup(client, identifier="227006104"):
     })
 
 
+@pytest.mark.parametrize("origin,status", [
+    ("http://testserver", 201),
+    ("http://localhost:3000", 201),
+    ("https://evil.example", 403),
+    ("http://testserver:9999", 403),
+    ("https://testserver", 403),
+    ("null", 403),
+])
+def test_auth_origin_allows_frontend_and_same_origin_swagger(client, origin, status):
+    response = client.post("/api/v1/auth/sign-up", headers={"Origin": origin}, json={
+        "fullName": "Swagger Member", "identifier": "swagger@example.com", "password": "password123",
+    })
+    assert response.status_code == status, response.text
+
+
+def test_swagger_origin_login_refresh_and_logout(client, member):
+    headers = {"Origin": "http://testserver"}
+    login = client.post("/api/v1/auth/sign-in", headers=headers, json={
+        "identifier": "one@example.com", "password": "password123",
+    })
+    assert login.status_code == 200, login.text
+    assert client.post("/api/v1/auth/refresh-session", headers=headers).status_code == 200
+    assert client.post("/api/v1/auth/logout", headers=headers).status_code == 204
+
+
 @pytest.mark.parametrize("identifier", ["227006104", "Member@Example.com"])
 def test_frontend_signup_signin_session(client, identifier):
     response = signup(client, identifier)
@@ -36,7 +61,7 @@ def test_frontend_signup_signin_session(client, identifier):
     assert "Max-Age" not in cookie
     headers = {"Authorization": "Bearer " + payload["accessToken"]}
     assert client.get("/api/v1/auth/session", headers=headers).json() == payload["user"]
-    assert client.get("/api/v1/coach/members", headers=headers).status_code == 403
+    assert client.get("/api/v1/coach/roster", headers=headers).status_code == 403
     assert client.get("/api/v1/auth/session").status_code == 401
     assert signup(client, identifier.lower()).status_code == 409
     login = client.post("/api/v1/auth/sign-in", json={

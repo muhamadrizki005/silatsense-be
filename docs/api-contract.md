@@ -1,6 +1,6 @@
 # Kontrak API SilatSense — baseline Fase 1 dan implementasi Fase 2–7
 
-Status diperbarui: 18 Oktober 2026. Endpoint **Fase 2–7 sudah diimplementasikan** pada
+Status diperbarui: 19 Oktober 2026. Alias HTTP prototype telah dihapus; [pemetaan pengganti](route-cleanup.md). Endpoint **Fase 2–7 sudah diimplementasikan** pada
 kode backend dan memerlukan migrasi sampai `0007` sebelum dijalankan. Recovery email dan bridge auth FE tersedia; integrasi data latihan FE masih
 terpisah. Kontrak dan bukti Fase 7: [phase7-api.md](phase7-api.md).
 Panduan [phase4-api.md](phase4-api.md), [phase5-api.md](phase5-api.md), [phase6-api.md](phase6-api.md). Status aktual dan bukti
@@ -16,26 +16,16 @@ Base path tetap `/api/v1`. URL host mengikuti mode operasi, bukan bagian DTO.
 | --- | --- | --- |
 | Tersedia, auth baru | `POST /auth/sign-up`, `POST /auth/sign-in` | NPM/email, DTO camelCase, Member saat registrasi publik |
 | Tersedia, auth baru | `GET /auth/session`, `POST /auth/refresh-session`, `POST /auth/logout` | Bearer, refresh cookie sekali pakai, logout sesi ini |
-| Kompatibilitas auth | `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `POST /auth/refresh` | DTO prototype, ID integer dan role uppercase |
-| Prototype | `GET/PATCH /profile` | Data User; PATCH hanya `name` |
-| Prototype | `GET /movements` | Slug internal, nama, `reference_ready` |
-| Prototype | `POST /evaluations` | Multipart `movement_type`, `video`; sinkron, 201, video langsung dibersihkan |
-| Prototype | `GET /evaluations`, `GET /evaluations/{evaluation_id}` | Hasil tersimpan; offset/limit, snake_case |
-| Prototype dengan scope Fase 6 | `GET /coach/members`, `GET /coach/members/{member_id}`, `GET /coach/members/{member_id}/evaluations` | Daftar/detail/histori hanya binaan aktif; shape lama tetap |
-| Prototype | `POST /coach/evaluations/{evaluation_id}/notes` | Catatan append-only, tanpa draft/revisi/keputusan |
 | Fase 2, diimplementasikan | `GET/PATCH /member/profile`, `GET/PATCH /coach/profile` | Profil per role, nullable, whitelist field |
 | Fase 2, diimplementasikan | `PATCH /member/password`, `PATCH /coach/password` | Password lama, pencabutan seluruh sesi, login ulang |
 | Fase 2, diimplementasikan | `GET /member/training-modules`, `GET /member/training-prep/{slug}`, `GET /member/record-config/{slug}` | Empat modul seeded, capability referensi valid, panduan kosong bila belum bersumber |
 | Fase 3, diimplementasikan | `POST /member/sessions`, `GET /member/sessions/{sessionId}` | Upload 202, status job, storage privat, worker persisten; [phase3-api.md](phase3-api.md) |
 
-Shape endpoint lama dipertahankan; endpoint baru tidak mengganti makna URL lama.
-`GET /coach/roster` dan `/coach/roster/{memberId}` menjadi kontrak daftar/detail
-binaan yang baru. Endpoint lama tetap offset/limit, tidak tiba-tiba berubah
-menjadi envelope cursor. Seluruh endpoint lama yang membaca detail/evaluasi
-atau menulis catatan sekarang memakai scope binaan, termasuk detail evaluasi
-generik untuk Coach. Scope Fase 6 tidak memberikan akses berdasarkan author lama.
-Tidak ada tanggal penghapusan endpoint lama; penghapusan memerlukan audit
-konsumen dan persetujuan integrasi tersendiri.
+Satu kontrak auth digunakan oleh FE: sign-up/sign-in/session/refresh-session/logout.
+Profil per role, katalog, sesi/worker, histori cursor dan roster/review menjadi
+jalur HTTP tunggal. Endpoint prototype lama menghasilkan 404. Data historis tetap
+tersimpan dan dibaca melalui kontrak sekarang; tidak ada migrasi atau penghapusan
+data pada pembersihan route ini.
 
 ## 2. Aturan domain, null, pagination, dan error
 
@@ -44,7 +34,7 @@ konsumen dan persetujuan integrasi tersendiri.
   sebagai ID sesi. Namespace `sessionId` dan `evaluationId` berbeda.
 - Slug publik: `kuda-kuda`, `pukulan`, `tangkisan`, `tendangan`. Mapping internal
   hanya `kuda-kuda` → `kuda_kuda`; tiga lainnya identik. Slug lain: 404 pada GET,
-  422 pada input upload. Endpoint prototype tetap menerima slug internal.
+  422 pada input upload. Slug internal hanya digunakan dalam penyimpanan/analyzer.
 - Timestamp baru adalah ISO 8601 UTC dengan `Z`. Ukuran byte, durasi detik,
   sudut `deg`, posisi relatif `shoulder_width`, skor `similarity_points`
   pada rentang 0–100. Skor bukan probabilitas, akurasi, atau persentase lulus.
@@ -526,7 +516,6 @@ sekarang dari penulis historis.
 Acceptance Fase 2–6 sudah diuji; bukti di [phase2-api.md](phase2-api.md),
 [phase3-api.md](phase3-api.md), [phase4-api.md](phase4-api.md), [phase5-api.md](phase5-api.md), [phase6-api.md](phase6-api.md).
 Acceptance Fase 7 dan batas uji aktual: [phase7-api.md](phase7-api.md).
-Fase 6–7 diuji native tanpa Docker. Endpoint prototype tetap kompatibel;
-consumernya belum dipastikan pindah, sehingga tidak dihapus atau ditandai
-OpenAPI deprecated secara menyesatkan. Untuk integrasi baru gunakan endpoint
-Member/Coach camelCase; endpoint lama hanya jalur kompatibilitas.
+Fase 6–7 diuji native tanpa Docker. Sesudah audit konsumen dan persetujuan
+pemilik proyek pada 19 Oktober 2026, alias prototype dihapus. Regresi penghapusan
+dan bukti baru dicatat di [route-cleanup.md](route-cleanup.md); data historis tetap didukung.

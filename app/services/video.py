@@ -1,6 +1,12 @@
 from pathlib import Path
 import cv2
 
+ALLOWED = {
+    ".mp4": {"video/mp4", "application/octet-stream"},
+    ".mov": {"video/quicktime", "video/mp4", "application/octet-stream"},
+    ".webm": {"video/webm", "application/octet-stream"},
+}
+
 
 class InvalidVideo(ValueError):
     pass

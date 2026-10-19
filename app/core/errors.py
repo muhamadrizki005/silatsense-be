@@ -32,11 +32,7 @@ def install_domain_errors(app):
     @app.middleware("http")
     async def domain_headers(request: Request, call_next):
         if not is_domain_request(request):
-            response = await call_next(request)
-            path = request.url.path.rstrip("/")
-            if path.startswith("/api/v1/coach/") or path == "/api/v1/evaluations" or path.startswith("/api/v1/evaluations/"):
-                response.headers["Cache-Control"] = "no-store"
-            return response
+            return await call_next(request)
         request.state.request_id = getattr(request.state, "request_id", str(uuid4()))
         try:
             response = await call_next(request)

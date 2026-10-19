@@ -35,7 +35,7 @@ def assert_domain_error(response, status, code):
     assert response.headers["cache-control"] == "no-store"
 
 
-def test_npm_profile_patch_nulls_and_legacy_contract(client):
+def test_npm_profile_patch_nulls_and_session_contract(client):
     body, headers = signup(client)
     response = client.get("/api/v1/member/profile", headers=headers)
     assert response.status_code == 200
@@ -55,9 +55,9 @@ def test_npm_profile_patch_nulls_and_legacy_contract(client):
     cleared = client.patch("/api/v1/member/profile", headers=headers, json={"division": None})
     assert cleared.json()["division"] is None
     assert cleared.json()["fullName"] == "Nama Baru"
-    legacy = client.get("/api/v1/profile", headers=headers).json()
-    assert legacy["name"] == "Nama Baru" and legacy["role"] == "MEMBER"
-    assert isinstance(legacy["id"], int) and "fullName" not in legacy
+    session = client.get("/api/v1/auth/session", headers=headers).json()
+    assert session["fullName"] == "Nama Baru" and session["role"] == "member"
+    assert isinstance(session["id"], str) and "name" not in session
 
 
 @pytest.mark.parametrize("payload", [
@@ -151,19 +151,19 @@ def test_failed_password_change_keeps_session(client, member, current, new, stat
 
 
 def test_coach_password_and_legacy_version_transition(client):
-    login = client.post("/api/v1/auth/login", json={"email": "coach@example.com", "password": "password123"}).json()
-    claims = jwt.decode(login["access_token"], settings.jwt_secret, algorithms=["HS256"])
+    login = client.post("/api/v1/auth/sign-in", json={"identifier": "coach@example.com", "password": "password123"}).json()
+    claims = jwt.decode(login["accessToken"], settings.jwt_secret, algorithms=["HS256"])
     del claims["authVersion"]
     legacy_token = jwt.encode(claims, settings.jwt_secret, algorithm="HS256")
     headers = {"Authorization": "Bearer " + legacy_token}
-    assert client.get("/api/v1/auth/me", headers=headers).status_code == 200
+    assert client.get("/api/v1/auth/session", headers=headers).status_code == 200
     assert_domain_error(client.patch("/api/v1/member/password", headers=headers,
                                     json={"currentPassword": "password123", "newPassword": "coach-new123"}),
                         403, "forbidden_role")
     assert client.patch("/api/v1/coach/password", headers=headers,
                         json={"currentPassword": "password123", "newPassword": "coach-new123"}).status_code == 204
-    assert client.get("/api/v1/auth/me", headers=headers).status_code == 401
-    assert client.post("/api/v1/auth/login", json={"email": "coach@example.com", "password": "coach-new123"}).status_code == 200
+    assert client.get("/api/v1/auth/session", headers=headers).status_code == 401
+    assert client.post("/api/v1/auth/sign-in", json={"identifier": "coach@example.com", "password": "coach-new123"}).status_code == 200
 
 
 @pytest.mark.parametrize("version", [None, "0", False, -1, 999])
@@ -252,7 +252,7 @@ def test_capability_only_uses_valid_reference_files(client, member, tmp_path, mo
 
 
 def test_statistics_group_only_comparable_scores_and_owner(client, member):
-    owner = int(client.get("/api/v1/auth/me", headers=member).json()["id"])
+    owner = int(client.get("/api/v1/auth/session", headers=member).json()["id"])
     def result(score, reference, feature=FEATURE_VERSION):
         return EvaluationSession(user_id=owner, movement="kuda_kuda", score=score,
                                  status="experimental" if score is not None else "reference_not_ready",

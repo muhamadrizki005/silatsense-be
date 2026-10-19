@@ -191,7 +191,7 @@ def test_claim_recovery_fencing_and_single_result(client, member, uploads):
         rows = db.scalars(select(EvaluationSession)).all()
         assert len(rows) == 1 and rows[0].score is None
         assert rows[0].result_json["model"]["feature_version"] == second.config["featureVersion"]
-    assert client.get("/api/v1/evaluations", headers=member).json()[0]["score"] is None
+    assert client.get(accepted["evaluationUrl"], headers=member).json()["score"] is None
 
 
 def test_result_and_completion_are_atomic(client, member, uploads, monkeypatch):
@@ -276,7 +276,7 @@ def test_cleanup_orphans_and_crashed_upload_reservations(client, member, uploads
     video, factory = uploads
     accepted = upload(client, member, video).json()
     storage = LocalStorage()
-    owner = int(client.get("/api/v1/auth/me", headers=member).json()["id"])
+    owner = int(client.get("/api/v1/auth/session", headers=member).json()["id"])
     token = uuid4().hex
     key = f"objects/{token}.mp4"
     with storage.create(storage.staging_key(key)) as stream:

@@ -1,5 +1,9 @@
 # Integrasi frontend SilatSense — audit dan perubahan yang diperlukan
 
+> Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
+> Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
+> Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).
+
 Status diperbarui: 18 Oktober 2026. Fase 1–6 membaca FE saja; **Fase 7 kini
 mengubah FE untuk auth bridge dan keamanan akun**. Backend Fase 2–7 tersedia
 dengan migrasi head 0007; kontrak [api-contract.md](api-contract.md), bukti native

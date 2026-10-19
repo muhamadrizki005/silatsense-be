@@ -1,5 +1,9 @@
 # Fase 6 — binaan, review dan tindak lanjut
 
+> Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
+> Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
+> Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).
+
 Status 18 Oktober 2026: tersedia pada kode backend dengan migrasi additive
 **0006**. Seluruh pengujian dan smoke fase ini berjalan **native, tanpa Docker**.
 Database development, `.env`, FE, prototype, migrasi 0001–0005 dan rumus skor

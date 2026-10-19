@@ -1,5 +1,9 @@
 # Fase 2 — profil, katalog dan keamanan akun
 
+> Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
+> Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
+> Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).
+
 Status 17 Oktober 2026: kode, migrasi `0003`, schema OpenAPI dan tes tersedia.
 Database development belum dimigrasi; `.env` tidak diubah. FE/prototype tetap
 read-only. Semua endpoint berada setelah `/api/v1`, memakai Bearer, role yang

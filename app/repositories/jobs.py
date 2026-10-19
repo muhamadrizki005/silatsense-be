@@ -8,7 +8,7 @@ from sqlalchemy import and_, or_, select
 from app.core.config import settings
 from app.models.entities import AnalysisJob, MediaAsset, TrainingSession, now
 from app.repositories.evaluations import EvaluationRepository
-from app.schemas.api import AnalysisOut, IssueOut, ModelOut
+from app.schemas.analysis import AnalysisSummary, AnalysisIssue, AnalysisModel
 from app.schemas.results import Measurement, PoseData
 
 
@@ -89,14 +89,14 @@ class JobRepository:
     def complete(self, claim, result):
         # Only trusted analyzer output is accepted; reject malformed/NaN results.
         json.dumps(result, allow_nan=False)
-        AnalysisOut.model_validate(result["analysis"])
-        ModelOut.model_validate(result["model"])
+        AnalysisSummary.model_validate(result["analysis"])
+        AnalysisModel.model_validate(result["model"])
         if result.get("pose") is not None:
             PoseData.model_validate(result["pose"])
         for measurement in result.get("measurements", []):
             Measurement.model_validate(measurement)
         for issue in result["issues"]:
-            IssueOut.model_validate(issue)
+            AnalysisIssue.model_validate(issue)
         if result["movement"] != claim.movement or result["status"] not in {
             "experimental", "reference_not_ready", "insufficient_pose", "insufficient_features",
         }:

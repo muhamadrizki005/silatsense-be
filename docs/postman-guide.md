@@ -135,8 +135,10 @@ collection. Recovery token diisi manual dari email. Template environment
 tidak menyimpan password/token nyata. Jangan membagikan export environment yang
 sudah terisi atau menyinkronkan secret ke workspace bersama.
 
-Tidak perlu menambahkan Origin pada Postman. Jika menambahkannya, nilainya harus
-persis FRONTEND_ORIGIN backend (default http://localhost:3000). Biarkan cookie jar
+Tidak perlu menambahkan Origin pada Postman. Jika menambahkannya, gunakan
+FRONTEND_ORIGIN backend (default http://localhost:3000) atau origin API sendiri
+(http://localhost:8001 saat memakai URL localhost). Swagger memakai origin API.
+Origin lain tetap ditolak. Biarkan cookie jar
 aktif; refresh_token HttpOnly tetap bisa dikelola Postman. Konfigurasi lokal HTTP
 memerlukan COOKIE_SECURE=false; jangan menonaktifkan Secure pada deployment HTTPS.
 
@@ -365,11 +367,8 @@ Respons error domain baru berisi detail, code dan requestId; auth existing dapat
 tetap berisi detail string/array. Simpan method, URL, status dan requestId untuk
 diagnosis, tanpa membagikan Bearer/cookie/password/token recovery.
 
-Folder 09 mencakup endpoint prototype untuk uji kompatibilitas opsional. Buat
-akun email legacy terpisah, lakukan upload legacy sendiri sebelum membuka detail
-evaluasinya. Sesuaikan assignment Coach ke Member legacy sebelum menguji catatan
-legacy. ID evaluasi berbeda dari ID sesi. Gunakan endpoint domain baru untuk
-alur integrasi FE; legacy bukan langkah wajib untuk menyelesaikan alur MVP.
+Folder prototype sudah dihapus dari collection. Seluruh tes memakai kontrak
+auth dan domain sekarang; lihat [pemetaan penghapusan](route-cleanup.md).
 
 ## 10. Diagnosis dan kriteria selesai
 
@@ -393,7 +392,7 @@ dikonfirmasi. Catat tahap yang belum dijalankan; jangan menyebut seluruh E2E lul
 hanya karena health 200. Penilaian ilmiah AI, benchmark kapasitas dan expiry 24 jam
 tidak dibuktikan oleh smoke manual singkat ini.
 
-Artefak panduan ini diperiksa secara statis terhadap snapshot OpenAPI: **67
-request mencakup 58/58 operasi**, referensi variable dan field body JSON sesuai
+Artefak panduan ini diperiksa secara statis terhadap snapshot OpenAPI: **53
+request mencakup 44/44 operasi**, referensi variable dan field body JSON sesuai
 schema. Pemeriksaan ini tidak mengirim HTTP/email, menjalankan aplikasi, atau
 mengubah database; hasil Send Postman tetap harus dicatat setelah dijalankan.
