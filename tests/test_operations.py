@@ -15,7 +15,9 @@ def test_public_health_identifies_application(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {
-        "status": "ok", "application": "SilatSense", "mode": "experimental",
+        "status": "ok",
+        "application": "SilatSense",
+        "mode": "experimental",
     }
 
 
