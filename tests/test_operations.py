@@ -1,11 +1,48 @@
 import json
 import logging
+import os
+import subprocess
+import sys
 from contextlib import contextmanager
 from sqlalchemy import text
 
 from app.main import app
 from app.db.session import get_db
 from app.core.config import settings
+
+
+def test_api_startup_and_docs_do_not_import_video_native_libraries():
+    code = """
+import importlib.abc
+import sys
+
+class MissingNativeVideo(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split('.')[0] in {'cv2', 'mediapipe'}:
+            raise ImportError('libxcb.so.1: cannot open shared object file')
+        return None
+
+sys.meta_path.insert(0, MissingNativeVideo())
+from app.main import app
+from fastapi.testclient import TestClient
+with TestClient(app) as client:
+    assert client.get('/health/live').status_code == 200
+    assert client.get('/health').status_code == 200
+    assert client.get('/docs').status_code == 200
+    assert client.get('/openapi.json').status_code == 200
+    assert client.get('/api/v1/auth/session').status_code == 401
+    assert client.get('/').status_code == 404
+assert 'cv2' not in sys.modules
+assert 'mediapipe' not in sys.modules
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        env={**os.environ, "DATABASE_URL": "sqlite://", "MAIL_ADAPTER": "disabled"},
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_readiness_requires_migration_and_writable_storage(

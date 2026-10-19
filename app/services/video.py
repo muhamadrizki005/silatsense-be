@@ -1,5 +1,4 @@
 from pathlib import Path
-import cv2
 
 ALLOWED = {
     ".mp4": {"video/mp4", "application/octet-stream"},
@@ -13,6 +12,10 @@ class InvalidVideo(ValueError):
 
 
 def sampled_frames(path: Path, sample_fps: float, max_seconds: int):
+    # Load native video dependencies only in the process that decodes video.
+    # Importing API upload constants must not require desktop/X11 libraries.
+    import cv2
+
     capture = cv2.VideoCapture(str(path))
     try:
         if not capture.isOpened():
