@@ -11,6 +11,14 @@ from app.db.session import get_db
 from app.core.config import settings
 
 
+def test_public_health_identifies_application(client):
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok", "application": "SilatSense", "mode": "experimental",
+    }
+
+
 def test_api_startup_and_docs_do_not_import_video_native_libraries():
     code = """
 import importlib.abc

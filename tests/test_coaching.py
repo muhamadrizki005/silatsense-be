@@ -74,6 +74,36 @@ def test_unassigned_coach_cannot_read_private_objects(client, member, coaching):
     assert client.get(f"/api/v1/member/history/{c['sid']}", headers=member).status_code == 200
 
 
+def test_coach_pose_follows_active_assignment_and_preserves_member_result(client, member, coaching):
+    from app.models.entities import EvaluationSession
+
+    c = coaching
+    pose = {
+        "kind": "keyframe", "frameIndex": 2, "timeSeconds": 0.2,
+        "coordinateSystem": "image-normalized", "origin": "top-left",
+        "imageWidth": 64, "imageHeight": 64,
+        "landmarks": [{"index": 0, "x": 0.5, "y": 0.25, "z": 0.0, "visibility": 0.9}],
+    }
+    with c["factory"]() as db:
+        evaluation = db.get(EvaluationSession, c["eid"])
+        evaluation.result_json = {**evaluation.result_json, "pose": pose}
+        db.commit()
+    path = f"/api/v1/coach/sessions/{c['sid']}/pose"
+    assign(c)
+    response = client.get(path, headers=c["coach"])
+    assert response.status_code == 200, response.text
+    assert response.json() == {"sessionId": str(c["sid"]), "pose": pose, "reason": None}
+    assert response.headers["cache-control"] == "no-store"
+    assert client.get(path, headers=c["coach2"]).status_code == 404
+    assign(c, c["second"])
+    assert client.get(path, headers=c["coach"]).status_code == 404
+    assert client.get(path, headers=c["coach2"]).json() == response.json()
+    assert client.get(f"/api/v1/member/sessions/{c['sid']}/pose", headers=member).json() == response.json()
+    with c["factory"]() as db:
+        assign_coach(db, c["owner"], None, "test-admin", "Revoke pose access")
+    assert client.get(path, headers=c["coach2"]).status_code == 404
+
+
 def test_assignment_transfer_revoke_and_unique_member_history(client, member, coaching):
     c = coaching
     assert assign(c)

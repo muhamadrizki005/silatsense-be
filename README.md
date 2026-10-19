@@ -9,6 +9,8 @@ Regresi pembersihan: SQLite **212 passed/18 skipped**, MySQL native terisolasi
 
 Untuk tim frontend: **[panduan serah terima dan prioritas integrasi](docs/frontend-handoff.md)**.
 
+Verifikasi lokal terbaru: **[44 operasi API, MySQL terisolasi, HTTP dan worker native](docs/local-api-verification.md)**.
+
 Untuk tes manual: **[panduan Postman dari startup sampai review/recovery](docs/postman-guide.md)**,
 [collection](docs/postman/SilatSense.postman_collection.json), dan
 [environment tanpa secret](docs/postman/SilatSense.local.postman_environment.json).
