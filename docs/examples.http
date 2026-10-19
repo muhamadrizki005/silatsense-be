@@ -1,0 +1,57 @@
+@base = http://localhost:8001/api/v1
+# Set local variables privately in your HTTP client; never commit real tokens/passwords.
+@accessToken = REPLACE_LOCALLY
+@recoveryToken = REPLACE_LOCALLY
+@currentPassword = REPLACE_LOCALLY
+@newPassword = REPLACE_LOCALLY
+
+### Session
+GET {{base}}/auth/session
+Authorization: Bearer {{accessToken}}
+
+### Link email: pending only; reauthentication required
+POST {{base}}/auth/email-link/request
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{"email":"member@example.com","currentPassword":"{{currentPassword}}"}
+
+### Confirm link; all sessions revoked after success
+POST {{base}}/auth/email-link/confirm
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{"token":"{{recoveryToken}}"}
+
+### Verify existing email
+POST {{base}}/auth/email-verification/request
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{"currentPassword":"{{currentPassword}}"}
+
+### Confirm verification
+POST {{base}}/auth/email-verification/confirm
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{"token":"{{recoveryToken}}"}
+
+### Generic reset request (verified emails only)
+POST {{base}}/auth/password-reset/request
+Content-Type: application/json
+
+{"identifier":"227006104"}
+
+### Reset once; login again
+POST {{base}}/auth/password-reset/confirm
+Content-Type: application/json
+
+{"token":"{{recoveryToken}}","newPassword":"{{newPassword}}"}
+
+### Private member data
+GET {{base}}/member/history?limit=20
+Authorization: Bearer {{accessToken}}
+
+### Liveness vs readiness (host without /api/v1)
+GET http://localhost:8001/health/ready

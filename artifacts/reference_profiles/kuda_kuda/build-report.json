@@ -1,0 +1,17 @@
+{
+  "source": "..\\datasets\\kuda_kuda",
+  "rotation": 270,
+  "feature_version": "image-plane-v1",
+  "images_seen": 1200,
+  "pose_valid": 1200,
+  "skipped": 0,
+  "original_splits_used_for_accuracy": false,
+  "variants": {
+    "belakang": 200,
+    "silang_depan": 200,
+    "silang_belakang": 200,
+    "tengah": 200,
+    "depan": 200,
+    "samping": 200
+  }
+}

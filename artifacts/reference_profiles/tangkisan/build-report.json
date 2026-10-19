@@ -1,0 +1,12 @@
+{
+  "source": "..\\datasets\\tangkisan",
+  "rotation": 0,
+  "feature_version": "image-plane-v1",
+  "images_seen": 203,
+  "pose_valid": 202,
+  "skipped": 1,
+  "original_splits_used_for_accuracy": false,
+  "variants": {
+    "tangkisan3": 202
+  }
+}

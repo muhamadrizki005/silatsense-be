@@ -1,0 +1,13 @@
+.git
+.data
+.env
+.env.*
+.venv
+__pycache__
+.pytest_cache
+.ruff_cache
+.cache
+*.db
+datasets
+artifacts/pose/*.task
+tmp

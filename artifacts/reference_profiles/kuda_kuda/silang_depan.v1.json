@@ -1,0 +1,121 @@
+{
+  "movement": "kuda_kuda",
+  "variant": "silang_depan",
+  "version": "kuda_kuda-silang_depan-prototype-v1",
+  "feature_version": "image-plane-v1",
+  "evaluator_type": "robust-reference",
+  "sample_count": 200,
+  "feature_statistics": {
+    "hip_alignment": {
+      "median": 6.049888026744399,
+      "iqr": 3.875299295981641,
+      "count": 200
+    },
+    "left_ankle_relative_to_hip_x": {
+      "median": -0.5111813986355688,
+      "iqr": 0.11454861400094912,
+      "count": 200
+    },
+    "left_ankle_relative_to_hip_y": {
+      "median": 2.131447386623175,
+      "iqr": 0.15467271130885862,
+      "count": 200
+    },
+    "left_elbow_angle": {
+      "median": 32.915376018668105,
+      "iqr": 8.993749507299885,
+      "count": 200
+    },
+    "left_hip_angle": {
+      "median": 169.73070271552416,
+      "iqr": 5.170073490321556,
+      "count": 200
+    },
+    "left_knee_angle": {
+      "median": 157.56032484208538,
+      "iqr": 12.966339817446482,
+      "count": 200
+    },
+    "left_shoulder_angle": {
+      "median": 22.51969298859312,
+      "iqr": 3.6238515901269075,
+      "count": 200
+    },
+    "left_wrist_relative_to_shoulder_x": {
+      "median": -0.20713493093343746,
+      "iqr": 0.15087687192751587,
+      "count": 200
+    },
+    "left_wrist_relative_to_shoulder_y": {
+      "median": 0.49218550020682095,
+      "iqr": 0.07469709274821962,
+      "count": 200
+    },
+    "right_ankle_relative_to_hip_x": {
+      "median": 1.0490130331977356,
+      "iqr": 0.1662601775133412,
+      "count": 200
+    },
+    "right_ankle_relative_to_hip_y": {
+      "median": 1.9426138699998292,
+      "iqr": 0.17827097536966896,
+      "count": 200
+    },
+    "right_elbow_angle": {
+      "median": 39.5695928556701,
+      "iqr": 8.818209327622426,
+      "count": 182
+    },
+    "right_hip_angle": {
+      "median": 176.8073434993254,
+      "iqr": 2.854793314157149,
+      "count": 200
+    },
+    "right_knee_angle": {
+      "median": 137.9134935447068,
+      "iqr": 7.117851930181217,
+      "count": 200
+    },
+    "right_shoulder_angle": {
+      "median": 24.759799492600777,
+      "iqr": 2.316787715702098,
+      "count": 182
+    },
+    "right_wrist_relative_to_shoulder_x": {
+      "median": 0.2907336694042138,
+      "iqr": 0.0972273141896128,
+      "count": 184
+    },
+    "right_wrist_relative_to_shoulder_y": {
+      "median": 0.47476100396421683,
+      "iqr": 0.05004179048253149,
+      "count": 184
+    },
+    "shoulder_alignment": {
+      "median": 7.787197511863143,
+      "iqr": 2.328697956231159,
+      "count": 200
+    },
+    "stance_width_ratio": {
+      "median": 1.0822931164172864,
+      "iqr": 0.22574328445806346,
+      "count": 200
+    },
+    "torso_inclination": {
+      "median": 3.386107201124212,
+      "iqr": 1.6623140794830475,
+      "count": 200
+    }
+  },
+  "provenance": {
+    "source": "..\\datasets\\kuda_kuda",
+    "rotation": 270,
+    "feature_version": "image-plane-v1",
+    "images_seen": 1200,
+    "pose_valid": 1200,
+    "skipped": 0,
+    "original_splits_used_for_accuracy": false,
+    "debug_partial": false,
+    "model_sha256": "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a"
+  }
+}

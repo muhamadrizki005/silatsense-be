@@ -1,0 +1,2491 @@
+{
+  "info": {
+    "name": "SilatSense Backend - Manual End-to-End",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Ikuti docs/postman-guide.md. Semua endpoint OpenAPI tercakup; jalankan request satu per satu. Tidak memuat secret atau file video. Test scripts menyimpan token/ID hanya ke environment Postman lokal. Jangan membagikan export environment berisi kredensial."
+  },
+  "item": [
+    {
+      "name": "01 - Kesiapan",
+      "description": "API dan MySQL harus berjalan. Tidak membutuhkan token.",
+      "item": [
+        {
+          "name": "/health/live",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/health/live",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/health/ready",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/health/ready",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "/health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{host}}/health",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Member auth",
+      "description": "Isi environment dahulu. Cookie jar Postman menyimpan refresh_token. Jangan jalankan semua folder sekaligus.",
+      "item": [
+        {
+          "name": "01 Registrasi Member baru",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/sign-up",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Member Postman\",\n  \"identifier\": \"{{memberIdentifier}}\",\n  \"password\": \"{{memberPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken !== undefined && data.accessToken !== null) pm.environment.set(\"memberToken\", String(data.accessToken));",
+                  "  if (data.user.id !== undefined && data.user.id !== null) pm.environment.set(\"memberId\", String(data.user.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Login Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/sign-in",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{memberIdentifier}}\",\n  \"password\": \"{{memberPassword}}\",\n  \"rememberMe\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken !== undefined && data.accessToken !== null) pm.environment.set(\"memberToken\", String(data.accessToken));",
+                  "  if (data.user.id !== undefined && data.user.id !== null) pm.environment.set(\"memberId\", String(data.user.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Sesi Member",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/session",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Refresh Member (cookie harus milik Member)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auth/refresh-session",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken !== undefined && data.accessToken !== null) pm.environment.set(\"memberToken\", String(data.accessToken));",
+                  "  if (data.user.id !== undefined && data.user.id !== null) pm.environment.set(\"memberId\", String(data.user.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Profil dan katalog Member",
+      "description": "Semua request memakai memberToken. Null dan akun kosong adalah respons valid.",
+      "item": [
+        {
+          "name": "01 Profil Member",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/profile",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Edit biodata Member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/member/profile",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Member Postman\",\n  \"division\": \"UKM Silat\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Katalog",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/training-modules",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Persiapan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/training-prep/{{movementSlug}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Konfigurasi upload",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/record-config/{{movementSlug}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/dashboard",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Histori halaman pertama",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/history?limit=20",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.nextCursor !== undefined && data.nextCursor !== null) pm.environment.set(\"historyCursor\", String(data.nextCursor));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Upload dan hasil",
+      "description": "Pilih file video lokal di form-data. Generate uploadKey sekali per upload logis. Worker harus berjalan; polling status manual sampai completed/failed.",
+      "item": [
+        {
+          "name": "01 Upload video (pilih file dahulu)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{uploadKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/member/sessions",
+            "description": "Wajib pilih file video dan isi uploadKey unik. Klik Send ulang dengan key/file/field sama untuk tes replay; hasil sessionId harus sama. Jangan pasang Content-Type manual.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "movementSlug",
+                  "value": "{{movementSlug}}",
+                  "type": "text"
+                },
+                {
+                  "key": "video",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });",
+                  "if (pm.response.code === 202) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.sessionId !== undefined && data.sessionId !== null) pm.environment.set(\"sessionId\", String(data.sessionId));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Status (ulang manual tiap sekitar 2 detik)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/sessions/{{sessionId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Evaluasi (setelah completed)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/sessions/{{sessionId}}/evaluation",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.id !== undefined && data.id !== null) pm.environment.set(\"evaluationId\", String(data.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Pose",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/sessions/{{sessionId}}/pose",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Video penuh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/sessions/{{sessionId}}/video",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Video Range",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Range",
+                "value": "bytes=0-1023"
+              }
+            ],
+            "url": "{{baseUrl}}/member/sessions/{{sessionId}}/video",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 206\", function () { pm.response.to.have.status(206); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Acknowledge",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/member/sessions/{{sessionId}}/acknowledge",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Histori detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/history/{{sessionId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Histori filter",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/history?limit=20&movementSlug={{movementSlug}}&processingStatus=completed&reviewStatus=pending",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Histori halaman berikut (hanya jika cursor tidak null)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/history?limit=20&cursor={{historyCursor}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.nextCursor !== undefined && data.nextCursor !== null) pm.environment.set(\"historyCursor\", String(data.nextCursor));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Coach dan review",
+      "description": "Buat akun Coach lewat CLI lalu assign Member. Login Coach mengganti refresh cookie jar; memberToken tetap variabel terpisah. Sesi wajib completed untuk review.",
+      "item": [
+        {
+          "name": "01 Login Coach",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/sign-in",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{coachIdentifier}}\",\n  \"password\": \"{{coachPassword}}\",\n  \"rememberMe\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken !== undefined && data.accessToken !== null) pm.environment.set(\"coachToken\", String(data.accessToken));",
+                  "  if (data.user.id !== undefined && data.user.id !== null) pm.environment.set(\"coachId\", String(data.user.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Sesi Coach",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/session",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Profil Coach",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/profile",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Edit profil Coach",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/coach/profile",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Coach Postman\",\n  \"division\": \"UKM Silat\",\n  \"title\": \"Pelatih\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/overview",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Roster",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/roster?limit=20",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Detail binaan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/roster/{{memberId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Sesi binaan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/roster/{{memberId}}/sessions?limit=20",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Detail sesi dan draft",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/sessions/{{sessionId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Pose Coach",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/sessions/{{sessionId}}/pose",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 Video Coach",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/sessions/{{sessionId}}/video",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 Simpan draft baru",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/coach/sessions/{{sessionId}}/feedback-draft",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedVersion\": 0,\n  \"decision\": \"needs_revision\",\n  \"note\": \"Contoh review manual untuk pengujian alur.\",\n  \"bodyAssessments\": [\n    {\n      \"bodyPart\": \"left_knee\",\n      \"status\": \"not_assessed\",\n      \"note\": \"Belum dinilai pada tes ini.\"\n    }\n  ],\n  \"tasks\": [\n    {\n      \"instruction\": \"Unggah latihan lanjutan setelah berkonsultasi dengan pelatih.\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.version !== undefined && data.version !== null) pm.environment.set(\"draftVersion\", String(data.version));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 Publikasikan review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{publishKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/coach/sessions/{{sessionId}}/reviews",
+            "description": "Sebelum Send, reviewRevision=0 untuk publikasi pertama dan draftVersion dari draft. Nilai versi berupa angka JSON tanpa tanda kutip. Setelah sukses, reviewRevision terbarui. Untuk replay, kembalikan payload revisi ke nilai semula dan gunakan publishKey yang sama.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedRevision\": {{reviewRevision}},\n  \"expectedDraftVersion\": {{draftVersion}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.revision !== undefined && data.revision !== null) pm.environment.set(\"reviewRevision\", String(data.revision));",
+                  "  if (data.taskIds[0] !== undefined && data.taskIds[0] !== null) pm.environment.set(\"taskId\", String(data.taskIds[0]));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - Member membaca review dan tindak lanjut",
+      "description": "Bearer tetap memberToken; tidak perlu login ulang jika access masih berlaku. Login ulang Member sebelum refresh/logout Member.",
+      "item": [
+        {
+          "name": "01 Baca review dan tugas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/member/history/{{sessionId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Selesaikan tugas",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/member/follow-up-tasks/{{taskId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Intent latihan ulang",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{retryKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/member/sessions/{{sessionId}}/follow-ups",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"intent\": \"retry\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Upload ulang (pilih video; key baru)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{retryUploadKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/member/sessions",
+            "description": "retryOf adalah ID sesi sumber, bukan ID intent. sessionId sumber tidak ditimpa; hasil baru disimpan sebagai retrySessionId.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "movementSlug",
+                  "value": "{{movementSlug}}",
+                  "type": "text"
+                },
+                {
+                  "key": "video",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "retryOf",
+                  "value": "{{sessionId}}",
+                  "type": "text"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });",
+                  "if (pm.response.code === 202) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.sessionId !== undefined && data.sessionId !== null) pm.environment.set(\"retrySessionId\", String(data.sessionId));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Keamanan akun (manual, setelah tes fitur)",
+      "description": "Request email benar-benar mengirim melalui SMTP. Isi alamat sendiri; ambil token dari email. Link dan reset mencabut sesi; login ulang. Jangan Run Collection keseluruhan.",
+      "item": [
+        {
+          "name": "01 Login ulang Member (cookie Member)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/sign-in",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{memberIdentifier}}\",\n  \"password\": \"{{memberPassword}}\",\n  \"rememberMe\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken !== undefined && data.accessToken !== null) pm.environment.set(\"memberToken\", String(data.accessToken));",
+                  "  if (data.user.id !== undefined && data.user.id !== null) pm.environment.set(\"memberId\", String(data.user.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 Request penautan email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/email-link/request",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{memberEmail}}\",\n  \"currentPassword\": \"{{memberPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Konfirmasi penautan (login ulang sesudahnya)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/email-link/confirm",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{linkToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Request verifikasi (alternatif untuk email existing)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/email-verification/request",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{memberPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Konfirmasi verifikasi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/email-verification/confirm",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verifyToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Request reset (hanya email verified)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/password-reset/request",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{memberIdentifier}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", function () { pm.response.to.have.status(202); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Konfirmasi reset (login ulang sesudahnya)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/password-reset/confirm",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"{{memberNewPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Ganti password Member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/member/password",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{memberPassword}}\",\n  \"newPassword\": \"{{memberNewPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Ganti password Coach (opsional)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/coach/password",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{coachPassword}}\",\n  \"newPassword\": \"{{coachNewPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Refresh Coach (login Coach dahulu)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auth/refresh-session",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.accessToken !== undefined && data.accessToken !== null) pm.environment.set(\"coachToken\", String(data.accessToken));",
+                  "  if (data.user.id !== undefined && data.user.id !== null) pm.environment.set(\"coachId\", String(data.user.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 Logout akun yang cookie-nya aktif",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auth/logout",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "08 - Hapus sesi (paling akhir)",
+      "description": "Soft-delete sesi uji; sesudahnya detail/media sesi tidak lagi bisa diakses melalui API. Jangan jalankan sebelum review selesai.",
+      "item": [
+        {
+          "name": "Hapus sesi sumber",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/member/sessions/{{sessionId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{memberToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "09 - Kompatibilitas prototype (opsional)",
+      "description": "Shape lama; tidak diperlukan alur integrasi baru. Gunakan akun email terpisah untuk legacy register/login. Legacy login/refresh mengganti refresh cookie. Jangan campur evaluationId dengan sessionId.",
+      "item": [
+        {
+          "name": "Register legacy (akun email lain)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Legacy Postman\",\n  \"email\": \"{{legacyEmail}}\",\n  \"password\": \"{{legacyPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token !== undefined && data.access_token !== null) pm.environment.set(\"legacyToken\", String(data.access_token));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login legacy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{legacyEmail}}\",\n  \"password\": \"{{legacyPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token !== undefined && data.access_token !== null) pm.environment.set(\"legacyToken\", String(data.access_token));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh legacy (cookie legacy)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/auth/refresh",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.access_token !== undefined && data.access_token !== null) pm.environment.set(\"legacyToken\", String(data.access_token));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Me legacy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{legacyToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Profil legacy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/profile",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{legacyToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Gerakan legacy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/movements",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{legacyToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Evaluasi legacy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/evaluations?offset=0&limit=20",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{legacyToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detail evaluasi legacy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/evaluations/{{evaluationId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{legacyToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Edit profil legacy",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/profile",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{legacyToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Legacy Postman\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Analisis sinkron legacy (opsional)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/evaluations",
+            "description": "Field/slug legacy berbeda dari upload sesi baru. Pilih video; proses sinkron dapat memerlukan timeout request lebih panjang. evaluationId disimpan untuk detail/catatan legacy.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{legacyToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "movement_type",
+                  "type": "text",
+                  "value": "kuda_kuda"
+                },
+                {
+                  "key": "video",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });",
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.id !== undefined && data.id !== null) pm.environment.set(\"evaluationId\", String(data.id));",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Daftar Member legacy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/members?offset=0&limit=20",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detail Member legacy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/members/{{memberId}}",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Evaluasi binaan legacy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coach/members/{{memberId}}/evaluations?offset=0&limit=20",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Catatan legacy (evaluationId wajib milik binaan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/coach/evaluations/{{evaluationId}}/notes",
+            "description": "Body kosong jika tidak disebutkan. Jalankan manual sesuai panduan.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{coachToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Catatan manual pengujian legacy.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", function () { pm.response.to.have.status(201); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

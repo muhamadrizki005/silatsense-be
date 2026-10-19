@@ -1,0 +1,47 @@
+name: Backend contract and MySQL
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  native-tests:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: disposable-ci-only
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pdisposable-ci-only"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      DATABASE_URL: sqlite://
+      JWT_SECRET: disposable-ci-only-signing-key
+      TEST_DATABASE_URL: mysql+pymysql://root:disposable-ci-only@127.0.0.1:3306/silatsense_ci_api_test
+      MIGRATION_TEST_DATABASE_URL: mysql+pymysql://root:disposable-ci-only@127.0.0.1:3306/silatsense_ci_migration_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: sudo apt-get update && sudo apt-get install -y libglib2.0-0 libgl1 libgles2 libegl1 libportaudio2
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m ruff check --select E9,F63,F7,F82 app scripts tests alembic
+      - name: Format new Phase 7 modules
+        run: >-
+          python -m ruff format --check app/api/recovery.py app/api/health.py
+          app/core/observability.py app/schemas/recovery.py app/services/recovery.py
+          app/services/mail.py scripts/cleanup_auth.py scripts/queue_status.py
+          scripts/export_openapi.py tests/test_recovery.py tests/test_smtp.py
+          tests/test_mysql_recovery.py tests/test_operations.py alembic/versions/0007_email_recovery.py
+      - name: Fresh disposable schemas
+        run: |
+          python - <<'PY'
+          import pymysql
+          with pymysql.connect(host='127.0.0.1',user='root',password='disposable-ci-only') as db:
+              with db.cursor() as cursor:
+                  for name in ('silatsense_ci_api_test','silatsense_ci_migration_test'):
+                      cursor.execute('CREATE DATABASE '+name+' CHARACTER SET utf8mb4')
+          PY
+      - run: python -m scripts.export_openapi --check
+      - run: python -m pytest -q
+      - run: docker build -t silatsense-ci .
