@@ -126,7 +126,7 @@ python -m venv .venv
 .venv/Scripts/python.exe -m pip install -r requirements-lock.txt
 ```
 
-Untuk native, siapkan `DATABASE_URL` lokal menuju target MySQL yang benar sesuai bagian status di atas, tanpa mencetak password. Compose existing tidak mempublikasikan port 13307. `.env.example` masih contoh konfigurasi Compose; jangan menimpa `.env` native pengguna dengannya. Perintah berikut dijalankan **setelah konfigurasi dan target database diverifikasi**:
+Untuk checkout baru, salin `.env.example` menjadi `.env`, lalu isi `DATABASE_URL` dengan user/password MySQL lokal dan buat `JWT_SECRET` acak sendiri. Template memakai native `127.0.0.1:3306/silatsense`; database harus sudah dibuat. Jangan menimpa `.env` yang sudah dikonfigurasi. Variabel `MYSQL_*` di bagian akhir hanya untuk Compose opsional, bukan koneksi native. Perintah berikut dijalankan **setelah konfigurasi dan target database diverifikasi**:
 
 ```powershell
 .venv/Scripts/alembic.exe upgrade head
@@ -143,7 +143,7 @@ Katalog database native sudah diisi. `scripts.seed` default juga mengimpor profi
 .venv/Scripts/python.exe -m scripts.cleanup_media
 ```
 
-Keduanya mendukung `--once`. Jalankan API, worker dan cleanup agar antrean berjalan dan file expired dibersihkan; konfigurasi baru ada di `.env.example` tanpa menulis `.env` lokal.
+Keduanya mendukung `--once`. Jalankan API, worker dan cleanup dari root proyek memakai database dan folder media yang sama agar antrean berjalan dan file expired dibersihkan. `.env.example` memuat konfigurasi upload, storage, worker, cleanup, dan rate limit beserta default-nya. `MAIL_ADAPTER=disabled` dapat dipakai tanpa SMTP; fitur verifikasi/reset email membutuhkan konfigurasi SMTP privat.
 
 ## Menjalankan dengan Docker (opsional)
 
@@ -159,8 +159,7 @@ Compose bersifat opsional. Port default 8000; `API_PORT` lokal saat audit adalah
 `.env` lokal sudah dibuat dengan secret acak. Untuk checkout baru, salin `.env.example` menjadi `.env`, lalu isi password database dan JWT secret. Model pose lokal sudah disalin dari prototype; file `.task` diabaikan Git. Untuk mengunduhnya pada mesin lain:
 
 ```powershell
-docker compose build
-docker compose run --rm --no-deps backend python -m scripts.download_pose_model
+.venv/Scripts/python.exe -m scripts.download_pose_model
 ```
 
 MySQL Compose hanya tersedia dalam jaringan Docker, memakai volume `silatsense-be_mysql_data` yang terpisah dari MySQL native/prototype. Database native dan Compose tidak otomatis berbagi data meskipun namanya sama. Startup existing menjalankan migrasi dan seed kategori/profil secara idempotent. Registrasi Member tersedia melalui API; untuk membuat akun Coach:
