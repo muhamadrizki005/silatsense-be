@@ -17,7 +17,14 @@ def file_hash(path):
     return digest.hexdigest()
 
 
-def extract_video(video, model, sample_fps=15.0, visibility=0.5, max_seconds=60.0):
+def extract_video(
+    video,
+    model,
+    sample_fps=15.0,
+    visibility=0.5,
+    max_seconds=60.0,
+    include_landmarks=False,
+):
     import cv2
     import numpy as np
     from app.intelligence.pose.mediapipe_extractor import MediaPipePoseExtractor
@@ -88,6 +95,15 @@ def extract_video(video, model, sample_fps=15.0, visibility=0.5, max_seconds=60.
                         "unavailableReasons": observed["unavailableReasons"],
                     }
                 )
+                if include_landmarks:
+                    frames[-1]["imageLandmarks"] = (
+                        [
+                            [float(v) if np.isfinite(v) else None for v in row]
+                            for row in landmarks[:, [0, 1, 3]]
+                        ]
+                        if landmarks is not None
+                        else None
+                    )
             index += 1
         if index < int(count) - 1 or not frames:
             raise ValueError("Video decoding incomplete")
