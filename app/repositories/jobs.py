@@ -22,6 +22,7 @@ class Claim:
     movement: str
     references: list
     config: dict
+    checksum: str | None = None
 
 
 def _terminal(job, session, code, timestamp):
@@ -60,7 +61,7 @@ class JobRepository:
             session.processing_status, session.error_code = "processing", None
             session.started_at = session.started_at or timestamp
             claimed = Claim(job.id, session.id, job.claim_token, media.storage_key, media.expires_at,
-                            session.movement, job.reference_snapshot, job.processing_config)
+                            session.movement, job.reference_snapshot, job.processing_config, media.checksum)
             db.commit()
             return claimed
 
@@ -119,6 +120,19 @@ class JobRepository:
             timestamp = now()
             session.processing_status, session.error_code, session.completed_at = "completed", None, timestamp
             job.state, job.finished_at, job.claim_token, job.lease_until = "completed", timestamp, None, None
+            db.commit()
+            return True
+
+    def validated_media(self, claim, metadata):
+        with self.factory() as db:
+            job, session = self._owned(db, claim)
+            if not job or session.deleted_at or claim.expires_at <= now():
+                return False
+            media = db.scalar(select(MediaAsset).where(MediaAsset.session_id == claim.session_id).with_for_update())
+            if not media or media.deleted_at or media.deletion_requested_at:
+                return False
+            media.duration_seconds = metadata["durationSeconds"]
+            media.width, media.height, media.mime_type = metadata["width"], metadata["height"], metadata["mimeType"]
             db.commit()
             return True
 

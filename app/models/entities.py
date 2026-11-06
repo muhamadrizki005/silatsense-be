@@ -186,9 +186,9 @@ class MediaAsset(Base):
     mime_type: Mapped[str] = mapped_column(String(80))
     byte_size: Mapped[int] = mapped_column(BigInteger)
     checksum: Mapped[str] = mapped_column(String(64))
-    duration_seconds: Mapped[float] = mapped_column(Float)
-    width: Mapped[int] = mapped_column()
-    height: Mapped[int] = mapped_column()
+    duration_seconds: Mapped[float | None] = mapped_column(Float)
+    width: Mapped[int | None] = mapped_column()
+    height: Mapped[int | None] = mapped_column()
     expires_at: Mapped[datetime] = mapped_column(DateTime().with_variant(DATETIME(fsp=6), "mysql"))
     deletion_requested_at: Mapped[datetime | None] = mapped_column(DateTime().with_variant(DATETIME(fsp=6), "mysql"))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime().with_variant(DATETIME(fsp=6), "mysql"))
@@ -222,6 +222,19 @@ class UploadReservation(Base):
     storage_key: Mapped[str] = mapped_column(String(100), unique=True)
     reserved_bytes: Mapped[int] = mapped_column(BigInteger)
     expires_at: Mapped[datetime] = mapped_column(DateTime().with_variant(DATETIME(fsp=6), "mysql"), index=True)
+
+
+class DirectUpload(Base):
+    __tablename__ = "direct_uploads"
+    __table_args__ = (UniqueConstraint("user_id", "key_hash", name="uq_direct_upload_owner_key"),)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    key_hash: Mapped[str] = mapped_column(String(64))
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    request_json: Mapped[dict] = mapped_column(JSON)
+    expires_at: Mapped[datetime] = mapped_column(DateTime().with_variant(DATETIME(fsp=6), "mysql"))
+    session_id: Mapped[int | None] = mapped_column(ForeignKey("training_sessions.id"))
+    response_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
 
 class IdempotencyRecord(Base):

@@ -7,13 +7,13 @@ from app.core.config import settings
 from app.models.entities import AnalysisJob, MediaAsset, TrainingSession, UploadReservation, now
 from app.repositories.jobs import _terminal
 from app.repositories.profiles import lock_user
-from app.services.storage import LocalStorage
+from app.services.storage import get_storage
 
 logger = logging.getLogger(__name__)
 
 
 def cleanup_once(factory):
-    storage = LocalStorage()
+    storage = get_storage()
     deleted = 0
     timestamp = now()
     with factory() as db:

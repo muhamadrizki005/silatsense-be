@@ -11,6 +11,7 @@ from app.api.coaching import router as coaching_router
 from app.core.upload_limits import UploadBodyLimit
 from app.api.recovery import router as recovery_router
 from app.api.health import router as health_router
+from app.api.uploads import router as uploads_router
 from app.core.observability import RequestLogMiddleware
 
 app = FastAPI(title="SilatSense Backend", version="0.7.0")
@@ -26,6 +27,7 @@ app.include_router(auth_router)
 app.include_router(profile_router)
 app.include_router(training_router)
 app.include_router(sessions_router)
+app.include_router(uploads_router)
 app.include_router(history_router)
 app.include_router(coaching_router)
 app.include_router(recovery_router)

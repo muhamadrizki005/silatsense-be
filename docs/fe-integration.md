@@ -1,5 +1,11 @@
 # Integrasi frontend SilatSense — audit dan perubahan yang diperlukan
 
+> Pembaruan B2 6 November 2026: untuk deployment mode `b2`, FE menggunakan init
+> JSON → PUT File langsung ke B2 → complete JSON → polling sessionId. Kontrak
+> multipart lokal tetap tersedia pada mode `local`. Lihat [panduan B2](b2-storage.md)
+> untuk payload, idempotensi, nullable metadata, CORS dan playback Range maksimum
+> 4 MiB per response. Kode FE belum diubah oleh pekerjaan backend ini.
+
 > Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
 > Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
 > Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).

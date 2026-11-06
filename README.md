@@ -1,5 +1,9 @@
 # SilatSense Backend
 
+Integrasi storage privat B2 dan alur direct upload: [panduan B2](docs/b2-storage.md).
+Mode native tetap memakai `STORAGE_ADAPTER=local`; mode B2 memerlukan migrasi
+`0008`, environment API/worker, CORS bucket, serta perubahan alur upload frontend.
+
 **Pembaruan 19 Oktober 2026:** route/schema HTTP prototype yang sudah punya
 pengganti telah dihapus. Auth hanya memakai sign-up/sign-in/session/refresh-session/logout;
 profil, katalog, sesi dan binaan memakai kontrak Member/Coach. Data existing tetap
@@ -123,8 +127,12 @@ Jalankan seluruh perintah dari root proyek. Python 3.12 diperlukan:
 
 ```powershell
 python -m venv .venv
-.venv/Scripts/python.exe -m pip install -r requirements-lock.txt
+.venv/Scripts/python.exe -m pip install -r requirements-dev.txt
 ```
+
+Instalasi development di atas menyertakan pytest, httpx untuk `scripts.validate_local`, dan Ruff. Deployment produksi memakai `requirements-lock.txt` atau `requirements.txt`, yang tidak memasang alat tes. Library OpenCV, NumPy dan MediaPipe tetap tersedia untuk validasi video dan worker; pemisahan ini tidak menonaktifkan endpoint.
+
+Pengurangan dependency 19 Oktober: virtualenv lokal **603,9 → 419,2 MB**; regresi MySQL **240 lulus**, SQLite **222 lulus/18 skip**, serta **44/44 operasi API** menerima respons sukses. [Bukti dan batas pengukuran](docs/vercel-deployment.md#pengurangan-dependency--19-oktober-2026).
 
 Untuk checkout baru, salin `.env.example` menjadi `.env`, lalu isi `DATABASE_URL` dengan user/password MySQL lokal dan buat `JWT_SECRET` acak sendiri. Template memakai native `127.0.0.1:3306/silatsense`; database harus sudah dibuat. Jangan menimpa `.env` yang sudah dikonfigurasi. Variabel `MYSQL_*` di bagian akhir hanya untuk Compose opsional, bukan koneksi native. Perintah berikut dijalankan **setelah konfigurasi dan target database diverifikasi**:
 
