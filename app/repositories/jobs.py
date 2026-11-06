@@ -31,6 +31,22 @@ def _terminal(job, session, code, timestamp):
     session.processing_status, session.error_code, session.completed_at = "failed", code, timestamp
 
 
+def claim_statement(timestamp, dialect):
+    # MySQL 5.7 cannot parse SKIP LOCKED. Plain FOR UPDATE still makes
+    # claims atomic; concurrent workers wait rather than skip a locked job.
+    name = dialect.name
+    version = dialect.server_version_info or ()
+    if name in {"mysql", "mariadb"}:
+        mariadb = name == "mariadb" or getattr(dialect, "is_mariadb", False)
+        skip_locked = version >= ((10, 6) if mariadb else (8, 0, 1))
+    else:
+        skip_locked = name == "postgresql"
+    return select(AnalysisJob).where(or_(
+        and_(AnalysisJob.state == "queued", AnalysisJob.available_at <= timestamp),
+        and_(AnalysisJob.state == "processing", AnalysisJob.lease_until <= timestamp),
+    )).order_by(AnalysisJob.available_at, AnalysisJob.id).limit(1).with_for_update(skip_locked=skip_locked)
+
+
 class JobRepository:
     def __init__(self, factory):
         self.factory = factory
@@ -38,14 +54,16 @@ class JobRepository:
     def claim(self, worker_id):
         timestamp = now()
         with self.factory() as db:
-            job = db.scalar(select(AnalysisJob).where(or_(
-                and_(AnalysisJob.state == "queued", AnalysisJob.available_at <= timestamp),
-                and_(AnalysisJob.state == "processing", AnalysisJob.lease_until <= timestamp),
-            )).order_by(AnalysisJob.available_at, AnalysisJob.id).limit(1).with_for_update(skip_locked=True))
+            # Initialize the dialect through the real connection before
+            # checking server_version_info (it is None before first connect).
+            job = db.scalar(claim_statement(timestamp, db.connection().dialect))
             if job is None:
                 return None
             session = db.scalar(select(TrainingSession).where(TrainingSession.id == job.session_id).with_for_update())
             media = db.scalar(select(MediaAsset).where(MediaAsset.session_id == session.id).with_for_update())
+            # A legacy server may have waited for row locks. Start the lease
+            # and check media expiry after those locks have been acquired.
+            timestamp = now()
             if session.deleted_at or not media or media.deleted_at or media.deletion_requested_at or media.expires_at <= timestamp:
                 _terminal(job, session, "media_expired" if media and media.expires_at <= timestamp else "media_unavailable", timestamp)
                 db.commit()
