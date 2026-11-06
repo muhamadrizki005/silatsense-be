@@ -52,6 +52,18 @@ def analysis_result():
             "issues": [], "model": {"analyzer_version": ANALYZER_VERSION, "reference_version": None}}
 
 
+def test_claim_lease_starts_after_waiting_for_database_locks(client, member, uploads, monkeypatch):
+    payload, factory = uploads
+    assert upload(client, member, payload).status_code == 202
+    before = now()
+    after = before + timedelta(seconds=10)
+    times = iter((before, after))
+    monkeypatch.setattr("app.repositories.jobs.now", lambda: next(times))
+    claim = JobRepository(factory).claim("waited-worker")
+    with factory() as db:
+        assert db.get(AnalysisJob, claim.job_id).lease_until == after + timedelta(seconds=settings.worker_lease_seconds)
+
+
 def assert_no_upload_state(factory):
     with factory() as db:
         for table in [TrainingSession, AnalysisJob, MediaAsset, IdempotencyRecord, UploadReservation]:

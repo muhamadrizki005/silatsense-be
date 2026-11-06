@@ -169,6 +169,10 @@ File sementara dihapus saat sukses/gagal. Lease di-heartbeat selama download dan
 inference; probe bounded timeout. Default concurrency tetap satu. Sediakan ruang
 disk sementara dan dependency CV/model pada host worker; tidak diperlukan Docker.
 
+Kompatibilitas claim: MySQL 5.7 memakai FOR UPDATE biasa, sehingga worker paralel
+menunggu row lock. MySQL >=8.0.1 dan MariaDB >=10.6 memakai SKIP LOCKED. Keduanya
+tetap memakai transaksi, lease dan fencing; default inference satu proses.
+
 `GET /health/ready` mengecek revisi 0008, operasi write/read/delete B2 dan adanya
 checksum model. Pemeriksaan ini mengonsumsi operasi B2; gunakan probe secukupnya.
 `workerConfiguration=ok` berarti konfigurasi tersedia, bukan worker aktif atau model
@@ -183,9 +187,10 @@ SQLite memeriksa upgrade/downgrade dan `alembic check` tanpa database pengguna.
 Tes MySQL khusus membutuhkan database disposable tersendiri; tidak otomatis
 menyentuh Filess. Hasil aktual ada di `docs/b2-verification.md`.
 
-Koneksi ke B2 asli, CORS browser, deployment Vercel, migrasi MySQL online dan host
-worker harus diverifikasi setelah environment disiapkan. Kode ini tidak mengklaim
-layanan cloud tersebut telah tersambung hanya karena tes terisolasi lulus.
+Koneksi B2 asli, migrasi MySQL online 0008, API Vercel dan worker native satu iterasi
+sudah diuji; hasil aktual di `b2-verification.md`. CORS/player browser serta proses
+worker/cleanup persisten tetap perlu disiapkan dan diuji. Tes sintetis tidak
+membuktikan akurasi penilaian gerakan.
 
 Rujukan: [B2 S3 API](https://www.backblaze.com/docs/cloud-storage-s3-compatible-api),
 [Copy Object](https://www.backblaze.com/apidocs/s3-copy-object),
