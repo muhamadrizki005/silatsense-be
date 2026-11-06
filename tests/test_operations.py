@@ -65,7 +65,7 @@ def test_readiness_requires_migration_and_writable_storage(
         db.execute(
             text("CREATE TABLE alembic_version (version_num VARCHAR(32) PRIMARY KEY)")
         )
-        db.execute(text("INSERT INTO alembic_version VALUES ('0007')"))
+        db.execute(text("INSERT INTO alembic_version VALUES ('0008')"))
         db.commit()
     try:
         assert client.get("/health/ready").json()["status"] == "ready"

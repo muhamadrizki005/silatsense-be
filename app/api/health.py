@@ -1,6 +1,3 @@
-from pathlib import Path
-import tempfile
-
 from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -8,6 +5,7 @@ from starlette.responses import JSONResponse
 
 from app.core.config import settings
 from app.db.session import get_db
+from app.services.storage import get_storage
 
 router = APIRouter(tags=["Operations"])
 
@@ -25,18 +23,18 @@ def ready(db: Session = Depends(get_db)):
         revisions = set(
             db.execute(text("SELECT version_num FROM alembic_version")).scalars()
         )
-        components["database"] = "ok" if revisions == {"0007"} else "migration_required"
+        components["database"] = "ok" if revisions == {"0008"} else "migration_required"
     except Exception:
         components["database"] = "unavailable_or_unmigrated"
     try:
-        root = Path(settings.media_root)
-        root.mkdir(parents=True, exist_ok=True)
-        with tempfile.TemporaryFile(dir=root) as probe:
-            probe.write(b"readiness")
-            probe.flush()
+        get_storage().check()
         components["storage"] = "ok"
     except OSError:
         components["storage"] = "unavailable"
+    if settings.storage_adapter == "b2":
+        components["workerConfiguration"] = (
+            "ok" if settings.pose_model_sha256 else "missing_model_checksum"
+        )
     ok = all(value == "ok" for value in components.values())
     return JSONResponse(
         {"status": "ready" if ok else "not_ready", "components": components},

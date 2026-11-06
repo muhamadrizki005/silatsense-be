@@ -1,5 +1,10 @@
 # Serah terima backend untuk frontend
 
+Pembaruan upload B2 6 November 2026: [alur upload dan playback untuk deployment](b2-storage.md).
+Mode B2 memerlukan dua request JSON API dan PUT video langsung ke storage;
+endpoint multipart pada panduan lama hanya berlaku untuk mode filesystem lokal.
+Backend, bucket/CORS, worker dan perubahan FE harus diaktifkan bersama.
+
 Status 19 Oktober 2026: **backend MVP siap dipakai untuk integrasi fitur aplikasi**.
 Seluruh layar FE belum terhubung; penilaian AI silat belum tervalidasi. Ini bukan
 klaim production-ready atau model AI final.

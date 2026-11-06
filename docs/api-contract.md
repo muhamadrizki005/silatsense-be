@@ -1,5 +1,11 @@
 # Kontrak API SilatSense — baseline Fase 1 dan implementasi Fase 2–7
 
+Pembaruan B2 6 November 2026: migrasi terbaru `0008`; mode `local` tetap kompatibel.
+Mode `b2` menambahkan `POST /api/v1/member/uploads` dan
+`POST /api/v1/member/uploads/{uploadId}/complete`, dengan PUT langsung ke storage.
+Kontrak dan batas playback: [b2-storage.md](b2-storage.md). Metadata media dapat
+null selama validasi worker; video belum dapat diputar sebelum validasi selesai.
+
 Status diperbarui: 19 Oktober 2026. Alias HTTP prototype telah dihapus; [pemetaan pengganti](route-cleanup.md). Endpoint **Fase 2–7 sudah diimplementasikan** pada
 kode backend dan memerlukan migrasi sampai `0007` sebelum dijalankan. Recovery email dan bridge auth FE tersedia; integrasi data latihan FE masih
 terpisah. Kontrak dan bukti Fase 7: [phase7-api.md](phase7-api.md).

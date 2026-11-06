@@ -3,6 +3,7 @@ import logging
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from threading import Event
 import time
 
@@ -10,7 +11,9 @@ from app.core.config import settings
 from app.models.entities import now
 from app.repositories.jobs import JobRepository
 from app.services.processes import ChildGuard, child_options
-from app.services.storage import LocalStorage
+from app.services.storage import get_storage
+from app.services.probe import probe_video
+from app.core.errors import DomainError
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +41,44 @@ class Worker:
         return True
 
     def _run(self, claim):
-        storage = LocalStorage()
+        storage = get_storage()
         if not storage.exists(claim.storage_key):
             self.jobs.fail(claim, "media_unavailable")
             return
-        payload = {"video": str(storage.path(claim.storage_key)), "movement": claim.movement,
-                   "references": claim.references, "config": claim.config}
+        download_started = heartbeat_at = time.monotonic()
+
+        def progress():
+            nonlocal heartbeat_at
+            if time.monotonic() - download_started > settings.worker_job_timeout_seconds:
+                raise DomainError(422, "analysis_timeout", "Download melampaui batas waktu.")
+            if self.stop.is_set() or now() >= claim.expires_at:
+                raise OSError("Download interrupted")
+            if time.monotonic() - heartbeat_at >= settings.worker_heartbeat_seconds:
+                if not self.jobs.heartbeat(claim):
+                    raise OSError("Worker lease lost")
+                heartbeat_at = time.monotonic()
+
+        try:
+            with storage.materialize(claim.storage_key, checksum=claim.checksum, progress=progress) as path:
+                progress()
+                if claim.config.get("remoteUpload"):
+                    # Probe is bounded and keeps the same fenced lease alive.
+                    if not self.jobs.heartbeat(claim):
+                        return
+                    metadata = probe_video(path, Path(claim.storage_key).suffix, progress=progress)
+                    progress()
+                    if not self.jobs.heartbeat(claim) or not self.jobs.validated_media(claim, metadata):
+                        return
+                self._analyze(claim, path)
+        except DomainError as error:
+            self.jobs.fail(claim, error.code, transient=error.status_code == 503)
+
+    def _analyze(self, claim, path):
+        config = dict(claim.config)
+        if config.get("remoteUpload"):
+            config["modelPath"] = str(Path(settings.pose_model_path).resolve())
+        payload = {"video": str(path), "movement": claim.movement,
+                   "references": claim.references, "config": config}
         with tempfile.TemporaryFile() as output:
             process = subprocess.Popen([sys.executable, "-m", "app.services.analysis_process"],
                                        stdin=subprocess.PIPE, stdout=output, stderr=subprocess.DEVNULL,

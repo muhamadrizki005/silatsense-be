@@ -94,6 +94,45 @@ def test_migration_empty_database_matches_models(migration_url, monkeypatch):
     command.check(config)
 
 
+def test_b2_migration_preserves_media_and_refuses_dummy_metadata_downgrade(migration_url, monkeypatch):
+    monkeypatch.setattr(settings, "database_url", migration_url)
+    config = Config("alembic.ini")
+    command.upgrade(config, "0007")
+    engine = create_engine(migration_url)
+    old = MetaData()
+    old.reflect(engine)
+    timestamp = datetime(2026, 11, 6, 12)
+    with engine.begin() as db:
+        db.execute(old.tables["users"].insert(), dict(id=1, name="Member", npm="227006104",
+            password_hash="unchanged", role="MEMBER", created_at=timestamp, auth_version=0))
+        db.execute(old.tables["training_sessions"].insert(), dict(id=1, user_id=1,
+            movement="pukulan", processing_status="completed", created_at=timestamp))
+        db.execute(old.tables["media_assets"].insert(), dict(id=1, user_id=1, session_id=1,
+            storage_key="objects/" + "a" * 32 + ".mp4", mime_type="video/mp4", byte_size=123,
+            checksum="b" * 64, duration_seconds=2.5, width=64, height=64,
+            expires_at=timestamp + timedelta(hours=24)))
+    command.upgrade(config, "head")
+    command.check(config)
+    metadata = MetaData()
+    metadata.reflect(engine)
+    media = metadata.tables["media_assets"]
+    assert all(media.c[name].nullable for name in ("width", "height", "duration_seconds"))
+    with engine.begin() as db:
+        row = db.execute(select(media)).mappings().one()
+        assert row["checksum"] == "b" * 64 and row["duration_seconds"] == 2.5
+        db.execute(media.update().values(width=None, height=None, duration_seconds=None))
+    with pytest.raises(RuntimeError, match="Validate or remove pending"):
+        command.downgrade(config, "0007")
+    with engine.begin() as db:
+        db.execute(media.update().values(width=64, height=64, duration_seconds=2.5))
+    command.downgrade(config, "0007")
+    command.upgrade(config, "head")
+    command.check(config)
+    with engine.connect() as db:
+        assert db.execute(select(media)).mappings().one()["byte_size"] == 123
+    engine.dispose()
+
+
 def test_phase5_indexes_preserve_existing_session_data(migration_url, monkeypatch):
     monkeypatch.setattr(settings, "database_url", migration_url)
     config = Config("alembic.ini")

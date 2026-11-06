@@ -2,34 +2,73 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 
 from app.core.config import settings
 from app.core.errors import DomainError
 from app.services.processes import ChildGuard, child_options
 
 
-def probe_video(path, suffix):
-    payload = {"path": str(path), "suffix": suffix, "limits": {
-        "seconds": settings.max_video_seconds, "long": settings.max_video_dimension,
-        "short": settings.max_video_short_dimension,
-    }}
+def probe_video(path, suffix, progress=None):
+    payload = {
+        "path": str(path),
+        "suffix": suffix,
+        "limits": {
+            "seconds": settings.max_video_seconds,
+            "long": settings.max_video_dimension,
+            "short": settings.max_video_short_dimension,
+        },
+    }
     with tempfile.TemporaryFile() as output:
-        process = subprocess.Popen([sys.executable, "-m", "app.services.video_probe"],
-                                   stdin=subprocess.PIPE, stdout=output, stderr=subprocess.DEVNULL,
-                                   **child_options(settings.process_memory_mb))
+        process = subprocess.Popen(
+            [sys.executable, "-m", "app.services.video_probe"],
+            stdin=subprocess.PIPE,
+            stdout=output,
+            stderr=subprocess.DEVNULL,
+            **child_options(settings.process_memory_mb),
+        )
         guard = None
         try:
             guard = ChildGuard(process, settings.process_memory_mb)
-            process.communicate(json.dumps(payload).encode(), timeout=settings.video_probe_timeout_seconds)
+            if progress is None:
+                process.communicate(
+                    json.dumps(payload).encode(),
+                    timeout=settings.video_probe_timeout_seconds,
+                )
+            else:
+                process.stdin.write(json.dumps(payload).encode())
+                process.stdin.close()
+                started = time.monotonic()
+                while process.poll() is None:
+                    progress()
+                    remaining = settings.video_probe_timeout_seconds - (
+                        time.monotonic() - started
+                    )
+                    if remaining <= 0:
+                        raise subprocess.TimeoutExpired(
+                            process.args, settings.video_probe_timeout_seconds
+                        )
+                    try:
+                        process.wait(timeout=min(0.25, remaining))
+                    except subprocess.TimeoutExpired:
+                        pass
             output.seek(0)
             result = json.loads(output.read(65536))
             if process.returncode != 0 or "error" in result:
-                raise DomainError(422, "invalid_video", "Video tidak valid atau melebihi batas durasi/resolusi.")
+                raise DomainError(
+                    422,
+                    "invalid_video",
+                    "Video tidak valid atau melebihi batas durasi/resolusi.",
+                )
             return result
         except subprocess.TimeoutExpired:
-            raise DomainError(503, "video_validation_timeout", "Validasi video melampaui batas waktu.")
+            raise DomainError(
+                503, "video_validation_timeout", "Validasi video melampaui batas waktu."
+            )
         except (ValueError, OSError):
-            raise DomainError(503, "video_validation_unavailable", "Validasi video tidak tersedia.")
+            raise DomainError(
+                503, "video_validation_unavailable", "Validasi video tidak tersedia."
+            )
         finally:
             if process.poll() is None:
                 process.kill()

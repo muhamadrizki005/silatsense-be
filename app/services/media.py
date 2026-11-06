@@ -8,9 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
 from app.core.errors import DomainError
+from app.core.config import settings
 from app.models.entities import CoachAssignment, MediaAsset, TrainingSession, User, now
 from app.services.sessions import get_session
-from app.services.storage import LocalStorage
+from app.services.storage import get_storage, StorageUnavailable
 
 CHUNK_SIZE = 256 * 1024
 
@@ -83,6 +84,8 @@ def media_access(db, owner_id, value):
         raise DomainError(410, "media_deleted", "Video sudah dihapus.")
     if not asset:
         raise DomainError(410, "media_unavailable", "Video tidak tersedia.")
+    if asset.width is None:
+        raise DomainError(409, "media_not_ready", "Video belum lolos validasi worker.")
     return session, asset
 
 
@@ -134,13 +137,10 @@ def playback(db, user, value, range_header, *, owner_id=None, assignment_event_i
     owner, version = user.id if owner_id is None else owner_id, user.auth_version
     actor_id = user.id if owner_id is not None else None
     session, asset = media_access(db, owner, value)
+    handle = None
     try:
-        handle = LocalStorage().path(asset.storage_key).open("rb")
-    except (OSError, ValueError):
-        raise DomainError(410, "media_unavailable", "Video tidak tersedia.")
-    try:
-        import os
-        size = os.fstat(handle.fileno()).st_size
+        storage = get_storage()
+        size = storage.size(asset.storage_key)
         if size != asset.byte_size or size <= 0:
             raise DomainError(410, "media_unavailable", "Video tidak tersedia.")
         try:
@@ -149,6 +149,13 @@ def playback(db, user, value, range_header, *, owner_id=None, assignment_event_i
             error = DomainError(416, "invalid_range", "Range video tidak valid.")
             error.headers = {"Content-Range": f"bytes */{size}", "Accept-Ranges": "bytes"}
             raise error
+        if settings.storage_adapter == "b2" and end - start + 1 > 4 * 1024 * 1024:
+            if range_header is None:
+                raise DomainError(413, "media_range_required", "Gunakan playback dengan header Range untuk video besar.")
+            # Keep each proxy response below the Vercel payload limit. Browser
+            # video players request subsequent ranges from Content-Range.
+            end, status = start + 4 * 1024 * 1024 - 1, 206
+        handle = storage.open_range(asset.storage_key, start, end)
         sid, aid, expiry, mime = session.id, asset.id, asset.expires_at, asset.mime_type
         factory = sessionmaker(bind=db.get_bind())
         db.rollback()  # Never hold the dependency transaction for a long stream.
@@ -163,6 +170,15 @@ def playback(db, user, value, range_header, *, owner_id=None, assignment_event_i
             access_check=lambda: stream_allowed(factory, owner, version, sid, aid, expiry, actor_id, assignment_event_id),
             expiry=expiry, handle=handle,
         )
+    except StorageUnavailable:
+        if handle:
+            handle.close()
+        raise DomainError(503, "storage_unavailable", "Storage tidak tersedia.") from None
+    except (OSError, ValueError):
+        if handle:
+            handle.close()
+        raise DomainError(410, "media_unavailable", "Video tidak tersedia.") from None
     except BaseException:
-        handle.close()
+        if handle:
+            handle.close()
         raise

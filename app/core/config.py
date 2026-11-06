@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, field_validator
 from typing import Literal
 
 
@@ -27,6 +27,14 @@ class Settings(BaseSettings):
     max_video_mb: int = 100
     max_video_seconds: int = 60
     media_root: str = ".data/media"
+    storage_adapter: Literal["local", "b2"] = "local"
+    b2_endpoint_url: str = "https://s3.us-west-004.backblazeb2.com"
+    b2_region: str = "us-west-004"
+    b2_bucket: str = ""
+    b2_key_id: str = ""
+    b2_application_key: str = Field(default="", repr=False)
+    # Required for remote uploads: API and worker must agree on model bytes.
+    pose_model_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     media_retention_hours: int = Field(default=24, ge=24, le=24)
     upload_quota_mb: int = Field(default=500, ge=1)
     max_pending_sessions: int = Field(default=2, ge=1)
@@ -45,6 +53,11 @@ class Settings(BaseSettings):
     cleanup_batch_size: int = Field(default=100, ge=1, le=1000)
     orphan_grace_seconds: int = Field(default=3600, ge=300)
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @field_validator("pose_model_sha256", mode="before")
+    @classmethod
+    def optional_model_checksum(cls, value):
+        return None if value == "" else value
 
     @model_validator(mode="after")
     def heartbeat_before_lease(self):

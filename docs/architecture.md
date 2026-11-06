@@ -1,5 +1,12 @@
 # Arsitektur, baseline dan status implementasi SilatSense
 
+Pembaruan B2 6 November 2026: `STORAGE_ADAPTER=local` mempertahankan filesystem
+native; `b2` menyimpan video privat di object storage dengan direct upload dan
+salinan objek final dari versi upload tertentu. Worker memakai file sementara,
+probe/checksum dan claim fencing sebelum analisis. Metadata baru nullable sampai
+validasi; MySQL tetap menyimpan sesi/job/hasil. Migrasi `0008` mempertahankan data
+existing. Panduan operasional dan keterbatasan: [b2-storage.md](b2-storage.md).
+
 > Pembaruan 19 Oktober 2026: endpoint/schema HTTP prototype sudah dihapus.
 > Rujukan kompatibilitas lama di catatan fase di bawah bersifat historis.
 > Kontrak aktif dan pemetaan pengganti: [route-cleanup.md](route-cleanup.md).

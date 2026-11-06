@@ -35,7 +35,7 @@ def activity_summary(db: Session, user_id: int) -> ActivitySummary:
     duration_count = 0
     duration_total = 0.0
     for duration in durations:
-        if isfinite(duration) and duration >= 0:
+        if duration is not None and isfinite(duration) and duration >= 0:
             duration_count += 1
             duration_total += duration
     completed_count = db.scalar(select(func.count()).select_from(TrainingSession).where(

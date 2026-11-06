@@ -15,7 +15,7 @@ from app.repositories.evaluations import EvaluationRepository
 from app.repositories.profiles import lock_user
 from app.schemas.sessions import AcceptedSession, MediaOut, SessionFailure, SessionOut
 from app.services.probe import probe_video
-from app.services.storage import LocalStorage
+from app.services.storage import LocalStorage, get_storage
 from app.services.training import required_movement
 from app.services.video import ALLOWED
 
@@ -70,8 +70,12 @@ def session_out(session, evaluation, asset, review=None, coach_available=False):
             status = "expired" if asset.expires_at <= now() else "deleted"
         elif asset.expires_at <= now():
             status = "expired"
-        elif LocalStorage().exists(asset.storage_key):
-            status = "available"
+        elif asset.width is not None:
+            try:
+                if get_storage().exists(asset.storage_key):
+                    status = "available"
+            except OSError:
+                pass  # Storage outage must not expose media or break history.
     media = MediaOut(
         status=status, expiresAt=asset.expires_at if asset else None,
         mimeType=asset.mime_type if asset else None, byteSize=asset.byte_size if asset else None,
@@ -141,6 +145,8 @@ def accept_upload(db, user, movement_slug, video, idempotency_key, retry_of=None
     owner_id, auth_version = user.id, user.auth_version
     reservation_id = final_key = None
     try:
+        if settings.storage_adapter != "local":
+            raise DomainError(503, "direct_upload_required", "Gunakan POST /api/v1/member/uploads untuk upload langsung ke B2.")
         if not idempotency_key.strip():
             raise DomainError(422, "validation_error", "Idempotency-Key tidak boleh kosong.")
         suffix = Path(video.filename or "").suffix.lower()

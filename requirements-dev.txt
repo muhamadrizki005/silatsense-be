@@ -1,2 +1,9 @@
 -r requirements-lock.txt
+# Test suite and manual HTTP validation CLI; excluded from production installs.
+httpcore==1.0.9
+httpx==0.28.1
+iniconfig==2.3.1
+pluggy==1.6.0
+pygments==2.21.0
+pytest==9.1.1
 ruff==0.14.10
