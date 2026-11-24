@@ -1,5 +1,8 @@
 # Kontrak API SilatSense — baseline Fase 1 dan implementasi Fase 2–7
 
+Tambahan 23 November 2026: [integrasi analyzer temporal Coach](coach-reference-api.md)
+pada branch terpisah; opt-in dan belum diaktifkan di deployment.
+
 Pembaruan B2 6 November 2026: migrasi terbaru `0008`; mode `local` tetap kompatibel.
 Mode `b2` menambahkan `POST /api/v1/member/uploads` dan
 `POST /api/v1/member/uploads/{uploadId}/complete`, dengan PUT langsung ke storage.
@@ -525,3 +528,9 @@ Acceptance Fase 7 dan batas uji aktual: [phase7-api.md](phase7-api.md).
 Fase 6–7 diuji native tanpa Docker. Sesudah audit konsumen dan persetujuan
 pemilik proyek pada 19 Oktober 2026, alias prototype dihapus. Regresi penghapusan
 dan bukti baru dicatat di [route-cleanup.md](route-cleanup.md); data historis tetap didukung.
+## Pembaruan analyzer Coach — 23 November 2026
+
+Kontrak aditif `movementId`, `reference_compared`, `coachComparison`, timeline
+pose dan pilihan gerakan tersedia pada branch integrasi, belum di deployment.
+Lihat [kontrak dan contoh alur](coach-reference-api.md). Mode default statis
+dan endpoint `/api/v1` existing dipertahankan; tidak ada migrasi database baru.

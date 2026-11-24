@@ -9,7 +9,6 @@ from sqlalchemy import func, select, update
 
 from app.core.config import settings
 from app.core.errors import DomainError
-from app.intelligence.contracts import ANALYZER_VERSION, FEATURE_VERSION
 from app.models.entities import AnalysisJob, EvaluationSession, IdempotencyRecord, MediaAsset, TrainingSession, UploadReservation, now
 from app.repositories.evaluations import EvaluationRepository
 from app.repositories.profiles import lock_user
@@ -18,6 +17,7 @@ from app.services.probe import probe_video
 from app.services.storage import LocalStorage, get_storage
 from app.services.training import required_movement
 from app.services.video import ALLOWED
+from app.services.analysis_config import processing_config, validate_target
 
 FAILURES = {
     "media_expired": "Masa simpan video telah berakhir.",
@@ -30,6 +30,8 @@ FAILURES = {
     "retry_exhausted": "Analisis gagal setelah batas percobaan.",
     "invalid_video": "Video tidak dapat dianalisis.",
     "analysis_failed": "Analisis gagal.",
+    "reference_model_unavailable": "Artifact referensi Coach tidak tersedia atau tidak valid.",
+    "reference_version_unavailable": "Versi referensi Coach pekerjaan tidak tersedia.",
 }
 
 
@@ -140,13 +142,14 @@ def _release(db, owner_id, reservation_id, final_key, storage):
         db.rollback()  # Cleanup CLI reconciles files/reservations after a DB/IO outage.
 
 
-def accept_upload(db, user, movement_slug, video, idempotency_key, retry_of=None):
+def accept_upload(db, user, movement_slug, video, idempotency_key, retry_of=None, movement_id=None):
     storage = LocalStorage()
     owner_id, auth_version = user.id, user.auth_version
     reservation_id = final_key = None
     try:
         if settings.storage_adapter != "local":
             raise DomainError(503, "direct_upload_required", "Gunakan POST /api/v1/member/uploads untuk upload langsung ke B2.")
+        validate_target(movement_slug, movement_id)
         if not idempotency_key.strip():
             raise DomainError(422, "validation_error", "Idempotency-Key tidak boleh kosong.")
         suffix = Path(video.filename or "").suffix.lower()
@@ -209,7 +212,10 @@ def accept_upload(db, user, movement_slug, video, idempotency_key, retry_of=None
         uploaded_at = now()
         if not size:
             raise DomainError(422, "invalid_video", "Video kosong.")
-        fingerprint = canonical_hash({"checksum": digest.hexdigest(), "movementSlug": movement_slug, "retryOf": retry_id})
+        fingerprint_data = {"checksum": digest.hexdigest(), "movementSlug": movement_slug, "retryOf": retry_id}
+        if movement_id is not None:
+            fingerprint_data["movementId"] = movement_id
+        fingerprint = canonical_hash(fingerprint_data)
         _authorized_lock(db, owner_id, auth_version)
         record = _record(db, owner_id, key_hash)
         if record:
@@ -218,10 +224,9 @@ def accept_upload(db, user, movement_slug, video, idempotency_key, retry_of=None
             return result
         db.commit()
         metadata = probe_video(storage.path(storage.staging_key(final_key)), suffix)
-        profiles = EvaluationRepository(db).profiles(movement)
+        profiles = EvaluationRepository(db).profiles(movement) if settings.analysis_mode == "static" else []
         snapshot = [{"profile": profile, "checksum": canonical_hash(profile)} for profile in profiles]
-        model_path = Path(settings.pose_model_path).resolve()
-        model_checksum = hashlib.sha256(model_path.read_bytes()).hexdigest() if model_path.is_file() else None
+        config = processing_config(movement_slug, movement_id)
         _authorized_lock(db, owner_id, auth_version)
         record = _record(db, owner_id, key_hash)
         if record:
@@ -244,9 +249,7 @@ def accept_upload(db, user, movement_slug, video, idempotency_key, retry_of=None
                           duration_seconds=metadata["durationSeconds"], width=metadata["width"], height=metadata["height"],
                           expires_at=uploaded_at + timedelta(hours=24)))
         db.add(AnalysisJob(session_id=session.id, state="queued", reference_snapshot=snapshot,
-                           processing_config={"analyzerVersion": ANALYZER_VERSION, "featureVersion": FEATURE_VERSION,
-                                              "modelPath": str(model_path), "modelChecksum": model_checksum,
-                                              "sampleFps": settings.sample_fps, "maxSeconds": settings.max_video_seconds}))
+                           processing_config=config))
         result = AcceptedSession(sessionId=str(session.id), uploadedAt=uploaded_at,
                                  statusUrl=f"/api/v1/member/sessions/{session.id}",
                                  evaluationUrl=f"/api/v1/member/sessions/{session.id}/evaluation")

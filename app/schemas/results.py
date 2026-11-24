@@ -1,10 +1,11 @@
 from typing import Literal
 
-from pydantic import Field, ConfigDict
+from pydantic import Field, ConfigDict, model_serializer
 
 from app.schemas.sessions import SessionModel
 from app.schemas.domain import DomainModel, MovementSlug
 from datetime import datetime
+from app.schemas.temporal import CoachComparison, PoseTimeline
 
 
 class Landmark(DomainModel):
@@ -36,6 +37,14 @@ class PoseOut(DomainModel):
     sessionId: str
     pose: PoseData | None
     reason: str | None
+    timeline: PoseTimeline | None = None
+
+    @model_serializer(mode="wrap")
+    def omit_absent_timeline(self, handler):
+        data = handler(self)
+        if self.timeline is None:
+            data.pop("timeline", None)
+        return data
 
 
 class Measurement(DomainModel):
@@ -65,12 +74,12 @@ class EvaluationOut(SessionModel):
     sessionId: str
     movementSlug: MovementSlug
     evaluatedAt: datetime
-    analysisStatus: Literal["experimental", "reference_not_ready", "insufficient_pose", "insufficient_features"]
+    analysisStatus: Literal["experimental", "reference_not_ready", "insufficient_pose", "insufficient_features", "reference_compared"]
     score: float | None = Field(ge=0, le=100, allow_inf_nan=False)
     scoreUnit: Literal["similarity_points"] = "similarity_points"
     scoreReason: str | None
     matchedVariant: str | None
-    method: Literal["static-reference-pose"] = "static-reference-pose"
+    method: Literal["static-reference-pose", "coach-reference-dtw"] = "static-reference-pose"
     analyzerVersion: str
     featureVersion: str | None
     referenceVersion: str | None
@@ -84,6 +93,7 @@ class EvaluationOut(SessionModel):
     validRepetitions: None = None
     deviatedRepetitions: None = None
     unavailableReasons: list[str]
+    coachComparison: CoachComparison | None = None
 
 
 class AcknowledgedOut(SessionModel):

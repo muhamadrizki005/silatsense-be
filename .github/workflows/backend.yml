@@ -33,6 +33,17 @@ jobs:
           app/services/mail.py scripts/cleanup_auth.py scripts/queue_status.py
           scripts/export_openapi.py tests/test_recovery.py tests/test_smtp.py
           tests/test_mysql_recovery.py tests/test_operations.py alembic/versions/0007_email_recovery.py
+      - name: Format Coach integration modules
+        run: >-
+          python -m ruff format --check app/intelligence/coach_contracts.py
+          app/schemas/temporal.py app/services/analysis_config.py
+          app/services/coach_analysis.py scripts/verify_coach_model.py
+          scripts/process_env.py scripts/worker.py scripts/cleanup_media.py
+          tests/test_coach_analysis_api.py tests/test_worker_env.py
+      - name: Format database pool modules
+        run: >-
+          python -m ruff format --check app/db/session.py app/core/error_metadata.py
+          scripts/db_status.py tests/test_db_pooling.py tests/test_worker_errors.py
       - name: Fresh disposable schemas
         run: |
           python - <<'PY'

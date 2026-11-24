@@ -10,6 +10,7 @@ from app.models.entities import AnalysisJob, MediaAsset, TrainingSession, now
 from app.repositories.evaluations import EvaluationRepository
 from app.schemas.analysis import AnalysisSummary, AnalysisIssue, AnalysisModel
 from app.schemas.results import Measurement, PoseData
+from app.schemas.temporal import CoachComparison, PoseTimeline
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,23 @@ class JobRepository:
         json.dumps(result, allow_nan=False)
         AnalysisSummary.model_validate(result["analysis"])
         AnalysisModel.model_validate(result["model"])
+        temporal = claim.config.get("method") == "coach-reference-dtw"
+        if temporal:
+            comparison = CoachComparison.model_validate(result["coach_comparison"])
+            PoseTimeline.model_validate(result["pose_timeline"])
+            if (result["analysis"].get("method") != "coach-reference-dtw"
+                    or result["score"] is not None
+                    or result["reference_profile_id"] is not None
+                    or result["status"] not in {"reference_compared", "insufficient_pose", "insufficient_features"}
+                    or result["model"]["analyzer_version"] != claim.config["analyzerVersion"]
+                    or result["model"].get("feature_version") != claim.config["featureVersion"]
+                    or result["model"].get("reference_version") != claim.config["referenceModelChecksum"]
+                    or comparison.movementId != claim.config["movementId"]
+                    or result["matched_variant"] != comparison.movementId
+                    or (result["status"] == "reference_compared") != (comparison.status == "compared")):
+                raise ValueError("Temporal result does not match job snapshot")
+        elif result["status"] == "reference_compared" or result.get("coach_comparison") is not None:
+            raise ValueError("Unexpected temporal result for static job")
         if result.get("pose") is not None:
             PoseData.model_validate(result["pose"])
         for measurement in result.get("measurements", []):
@@ -117,7 +135,7 @@ class JobRepository:
         for issue in result["issues"]:
             AnalysisIssue.model_validate(issue)
         if result["movement"] != claim.movement or result["status"] not in {
-            "experimental", "reference_not_ready", "insufficient_pose", "insufficient_features",
+            "experimental", "reference_not_ready", "insufficient_pose", "insufficient_features", "reference_compared",
         }:
             raise ValueError("Invalid analysis result")
         score = result["score"]

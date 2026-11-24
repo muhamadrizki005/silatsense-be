@@ -14,6 +14,7 @@ from app.services.processes import ChildGuard, child_options
 from app.services.storage import get_storage
 from app.services.probe import probe_video
 from app.core.errors import DomainError
+from app.core.error_metadata import safe_error_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -111,8 +112,9 @@ class Worker:
                         heartbeat_at = time.monotonic()
                     self.stop.wait(0.1)
                 output.seek(0)
-                raw = output.read(2 * 1024 * 1024 + 1)
-                if process.returncode != 0 or len(raw) > 2 * 1024 * 1024:
+                limit = (8 if config.get("method") == "coach-reference-dtw" else 2) * 1024 * 1024
+                raw = output.read(limit + 1)
+                if process.returncode != 0 or len(raw) > limit:
                     self.jobs.fail(claim, "analysis_failed")
                     return
                 result = json.loads(raw)
@@ -128,12 +130,20 @@ class Worker:
                     guard.close()
 
     def run_forever(self):
+        backoff = settings.worker_error_backoff_seconds
         while not self.stop.is_set():
+            delay = settings.worker_poll_seconds
             try:
                 worked = self.run_once()
-            except Exception:
+                backoff = settings.worker_error_backoff_seconds
+            except Exception as error:
                 # DB outage: committed leases are recovered on restart/expiry.
-                logger.error("worker_iteration_failed workerId=%s", self.worker_id)
+                delay = min(backoff, settings.worker_error_max_backoff_seconds)
+                logger.error(json.dumps({
+                    "event": "worker_iteration_failed", "workerId": self.worker_id,
+                    **safe_error_metadata(error), "retryInSeconds": delay,
+                }))
+                backoff = min(delay * 2, settings.worker_error_max_backoff_seconds)
                 worked = False
             if not worked:
-                self.stop.wait(settings.worker_poll_seconds)
+                self.stop.wait(delay)

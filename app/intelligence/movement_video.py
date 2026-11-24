@@ -59,6 +59,7 @@ def extract_video(
         stride = max(1, round(fps / sample_fps))
         extractor = MediaPipePoseExtractor(str(model))
         frames, index = [], 0
+        image_width = image_height = None
         while True:
             ok, frame = capture.read()
             if not ok:
@@ -72,6 +73,7 @@ def extract_video(
                     frame = cv2.resize(
                         frame, (round(width * scale), round(height * scale))
                     )
+                image_height, image_width = frame.shape[:2]
                 pose = extractor.extract(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
                 landmarks = pose.landmarks if pose is not None else None
                 if landmarks is not None:
@@ -131,6 +133,8 @@ def extract_video(
                 "fps": fps,
                 "decodedFrameCount": index,
                 "samplingStride": stride,
+                "imageWidth": image_width,
+                "imageHeight": image_height,
             },
             "coverage": {
                 name: sum(row["features"][name] is not None for row in frames)

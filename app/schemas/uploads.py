@@ -5,6 +5,7 @@ from pydantic import Field
 
 from app.schemas.domain import MovementSlug
 from app.schemas.sessions import AcceptedSession, SessionModel
+from app.intelligence.coach_contracts import MovementId
 
 
 class UploadRequest(SessionModel):
@@ -14,6 +15,7 @@ class UploadRequest(SessionModel):
     byteSize: int = Field(gt=0)
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     retryOf: str | None = None
+    movementId: MovementId | None = None
 
 
 class UploadTicket(SessionModel):

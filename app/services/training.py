@@ -6,17 +6,22 @@ from app.repositories.evaluations import EvaluationRepository
 from app.repositories.profiles import activity_summary
 from app.repositories.training import active_movements, find_movement
 from app.schemas.domain import Capability, GuideItem, TrainingCatalog, TrainingModule, TrainingPrep, UploadConfig
+from app.intelligence.movement_catalog import MOVEMENTS
 
 
 def module_data(db, row):
-    profiles = EvaluationRepository(db).profiles(row.slug)
+    temporal = settings.analysis_mode == "coach-reference"
+    profiles = EvaluationRepository(db).profiles(row.slug) if not temporal else []
     return TrainingModule(
         slug="kuda-kuda" if row.slug == "kuda_kuda" else row.slug,
         name=row.name, order=row.display_order, description=row.description,
         level=row.level, estimatedDurationSeconds=row.estimated_duration_seconds,
         capability=Capability(
-            scoringAvailable=bool(profiles), reason=None if profiles else "reference_not_ready",
-            referenceVersions=sorted({profile["version"] for profile in profiles}),
+            scoringAvailable=bool(profiles),
+            reason="correctness_not_validated" if temporal and settings.coach_reference_sha256 else None if profiles else "reference_not_ready",
+            method="coach-reference-dtw" if temporal else "static-reference-pose",
+            referenceComparisonAvailable=temporal and bool(settings.coach_reference_sha256),
+            referenceVersions=[settings.coach_reference_sha256] if temporal and settings.coach_reference_sha256 else sorted({profile["version"] for profile in profiles}),
         ),
     )
 
@@ -60,4 +65,7 @@ def upload_config(db, slug):
         acceptedMimeTypes=["video/mp4", "video/quicktime", "video/webm"],
         maxBytes=settings.max_video_mb * 1024 * 1024, maxDurationSeconds=settings.max_video_seconds,
         recommendedDurationSeconds=row.estimated_duration_seconds,
+        movementIdRequired=settings.analysis_mode == "coach-reference",
+        movements=[dict(id=key, name=value[1]) for key, value in MOVEMENTS.items() if value[0] == row.slug],
+        analysisMethod="coach-reference-dtw" if settings.analysis_mode == "coach-reference" else "static-reference-pose",
     )

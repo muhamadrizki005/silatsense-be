@@ -7,6 +7,15 @@ class Settings(BaseSettings):
     database_url: str = (
         "mysql+pymysql://silatsense:local-prototype-password@localhost:3306/silatsense"
     )
+    # A budget per Engine/process, not a global account/instance limit.
+    db_pool_mode: Literal["queue", "null"] = "queue"
+    db_pool_size: int = Field(default=1, ge=1)
+    db_max_overflow: int = Field(default=0, ge=0)
+    db_pool_timeout_seconds: float = Field(default=5, gt=0, le=30)
+    db_pool_recycle_seconds: int = Field(default=300, ge=1)
+    db_connect_timeout_seconds: int = Field(default=5, ge=1, le=60)
+    db_read_timeout_seconds: float = Field(default=10, gt=0, le=120)
+    db_write_timeout_seconds: float = Field(default=10, gt=0, le=120)
     jwt_secret: str = "local-only-change-this-secret-before-sharing"
     frontend_origin: str = "http://localhost:3000"
     cookie_secure: bool = False
@@ -23,6 +32,9 @@ class Settings(BaseSettings):
     signup_ip_requests_per_hour: int = Field(default=20, ge=1)
     pose_model_path: str = "artifacts/pose/pose_landmarker_lite.task"
     reference_root: str = "artifacts/reference_profiles"
+    analysis_mode: Literal["static", "coach-reference"] = "static"
+    coach_reference_model_path: str = ".data/models/coach-reference.json"
+    coach_reference_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     sample_fps: float = 2
     max_video_mb: int = 100
     max_video_seconds: int = 60
@@ -45,6 +57,8 @@ class Settings(BaseSettings):
     process_memory_mb: int = Field(default=2048, ge=128)
     worker_concurrency: int = Field(default=1, ge=1, le=8)
     worker_poll_seconds: float = Field(default=1, gt=0)
+    worker_error_backoff_seconds: float = Field(default=5, gt=0)
+    worker_error_max_backoff_seconds: float = Field(default=60, gt=0)
     worker_lease_seconds: int = Field(default=60, ge=3)
     worker_heartbeat_seconds: float = Field(default=15, gt=0)
     worker_job_timeout_seconds: float = Field(default=120, gt=0)
@@ -54,7 +68,7 @@ class Settings(BaseSettings):
     orphan_grace_seconds: int = Field(default=3600, ge=300)
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    @field_validator("pose_model_sha256", mode="before")
+    @field_validator("pose_model_sha256", "coach_reference_sha256", mode="before")
     @classmethod
     def optional_model_checksum(cls, value):
         return None if value == "" else value
@@ -63,6 +77,8 @@ class Settings(BaseSettings):
     def heartbeat_before_lease(self):
         if self.worker_heartbeat_seconds >= self.worker_lease_seconds:
             raise ValueError("Worker heartbeat must be shorter than its lease")
+        if self.worker_error_max_backoff_seconds < self.worker_error_backoff_seconds:
+            raise ValueError("Worker maximum error backoff must cover its initial backoff")
         return self
 
 

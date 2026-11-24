@@ -25,6 +25,7 @@ from app.services.sessions import _authorized_lock, canonical_hash, get_session
 from app.services.storage import StorageUnavailable, get_storage
 from app.services.training import required_movement
 from app.services.video import ALLOWED
+from app.services.analysis_config import processing_config
 
 
 def storage_for_upload():
@@ -91,6 +92,9 @@ def initiate_upload(db, user, request, key):
             422, "validation_error", "Idempotency-Key tidak boleh kosong."
         )
     payload = request.model_dump()
+    # Preserve fingerprints of legacy requests that did not have this field.
+    if payload.get("movementId") is None:
+        payload.pop("movementId", None)
     suffix = Path(request.filename).suffix.lower()
     if suffix not in ALLOWED or request.mimeType not in ALLOWED[suffix]:
         raise DomainError(
@@ -121,6 +125,7 @@ def initiate_upload(db, user, request, key):
             db.commit()
             return result
         required_movement(db, request.movementSlug)
+        config = processing_config(request.movementSlug, request.movementId, remote=True)
         if request.retryOf:
             previous = get_session(db, owner, request.retryOf)
             movement = (
@@ -170,7 +175,7 @@ def initiate_upload(db, user, request, key):
             user_id=owner,
             key_hash=key_hash,
             fingerprint=fingerprint,
-            request_json=payload,
+            request_json={**payload, "analysisConfig": config},
             expires_at=expiry,
         )
         db.add(row)
@@ -226,7 +231,8 @@ def complete_upload(db, user, upload_id):
             if request["retryOf"]
             else None
         )
-        profiles = EvaluationRepository(db).profiles(movement)
+        config = request.get("analysisConfig")
+        profiles = EvaluationRepository(db).profiles(movement) if not config or config.get("method") != "coach-reference-dtw" else []
         snapshot = [
             {"profile": profile, "checksum": canonical_hash(profile)}
             for profile in profiles
@@ -263,7 +269,7 @@ def complete_upload(db, user, upload_id):
                 session_id=session.id,
                 state="queued",
                 reference_snapshot=snapshot,
-                processing_config={
+                processing_config=config or {
                     "analyzerVersion": ANALYZER_VERSION,
                     "featureVersion": FEATURE_VERSION,
                     "modelPath": settings.pose_model_path,

@@ -13,7 +13,10 @@ def execute(request):
     from app.services.analysis import EvaluationService
     from app.services.video import InvalidVideo
     config = request["config"]
-    if config["analyzerVersion"] != ANALYZER_VERSION or config["featureVersion"] != FEATURE_VERSION:
+    temporal = config.get("method") == "coach-reference-dtw"
+    from app.intelligence.coach_contracts import ANALYZER_VERSION as COACH_VERSION, FEATURE_VERSION as COACH_FEATURES
+    expected = (COACH_VERSION, COACH_FEATURES) if temporal else (ANALYZER_VERSION, FEATURE_VERSION)
+    if (config["analyzerVersion"], config["featureVersion"]) != expected:
         return {"error": "analyzer_version_unavailable", "transient": False}
     path = Path(config["modelPath"])
     if not path.is_file():
@@ -26,9 +29,19 @@ def execute(request):
         if hashlib.sha256(serialized).hexdigest() != snapshot["checksum"]:
             return {"error": "analysis_failed", "transient": False}
         profiles.append(snapshot["profile"])
-    settings.pose_model_path = str(path)
-    settings.sample_fps, settings.max_video_seconds = config["sampleFps"], config["maxSeconds"]
     try:
+        if temporal:
+            from app.services.coach_analysis import analyze, load_reference, ReferenceArtifactError
+            try:
+                model = load_reference(settings.coach_reference_model_path, config.get("referenceModelChecksum"))
+                return {"result": analyze(Path(request["video"]), request["movement"], config["movementId"],
+                    model, config["referenceModelChecksum"], path, config["maxSeconds"])}
+            except ReferenceArtifactError as error:
+                return {"error": error.code, "transient": False}
+            except ValueError:
+                return {"error": "analysis_failed", "transient": False}
+        settings.pose_model_path = str(path)
+        settings.sample_fps, settings.max_video_seconds = config["sampleFps"], config["maxSeconds"]
         return {"result": EvaluationService().analyze(Path(request["video"]), request["movement"], profiles)}
     except InvalidVideo:
         return {"error": "invalid_video", "transient": False}

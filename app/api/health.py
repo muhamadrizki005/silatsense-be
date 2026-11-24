@@ -35,6 +35,10 @@ def ready(db: Session = Depends(get_db)):
         components["workerConfiguration"] = (
             "ok" if settings.pose_model_sha256 else "missing_model_checksum"
         )
+    if settings.analysis_mode == "coach-reference":
+        components["coachReferenceConfiguration"] = (
+            "ok" if settings.coach_reference_sha256 else "missing_reference_checksum"
+        )
     ok = all(value == "ok" for value in components.values())
     return JSONResponse(
         {"status": "ready" if ok else "not_ready", "components": components},

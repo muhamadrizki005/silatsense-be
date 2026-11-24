@@ -1,5 +1,11 @@
 # SilatSense Backend
 
+**23 November 2026 — integrasi analyzer Coach pada branch terpisah:** worker/API
+mendukung perbandingan urutan 12 gerakan, target `movementId`, dan timeline pose
+untuk overlay FE. Default tetap analyzer statis; mode baru opt-in, hasil tidak
+menjadi skor/keputusan benar-salah. [Kontrak dan setup worker](docs/coach-reference-api.md)
+serta [bukti pengujian](docs/coach-reference-verification.md). Belum diaktifkan di deployment.
+
 Integrasi storage privat B2 dan alur direct upload: [panduan B2](docs/b2-storage.md).
 Mode native tetap memakai `STORAGE_ADAPTER=local`; mode B2 memerlukan migrasi
 `0008`, environment API/worker, CORS bucket, serta perubahan alur upload frontend.
@@ -179,6 +185,11 @@ docker compose exec backend python -m scripts.seed --coach-email pelatih@example
 Password diminta interaktif. Pembuatan akun Coach belum menugaskan binaan; CLI penugasan/transfer/revoke kini tersedia, lihat [phase6-api.md](docs/phase6-api.md). Hentikan layanan dengan `docker compose stop`; data tetap tersimpan. Gunakan port kosong bila 8000 dipakai aplikasi lain. Sesuaikan `FRONTEND_ORIGIN` dengan origin frontend saat integrasi.
 
 ## Verifikasi
+
+Jika Filess menolak koneksi dengan MySQL 1226 (`max_user_connections`), lihat
+[diagnosis, batas pool dan handoff pemulihan](docs/database-connections.md).
+`python -m scripts.db_status --env-file .env.worker` hanya menjalankan `SELECT 1`
+dan menutup koneksi diagnostiknya; tidak memproses antrean atau memeriksa storage.
 
 ```powershell
 $env:DATABASE_URL = 'sqlite://'
