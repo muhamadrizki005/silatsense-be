@@ -391,6 +391,17 @@
             "title": "Movementid",
             "type": "string"
           },
+          "postureAssessment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostureAssessment"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Computed on evaluation read from stored paired frames. Experimental equal-weight points, not an official correctness verdict or manual Coach assessment."
+          },
           "qualityAssessmentValidated": {
             "const": false,
             "default": false,
@@ -2096,6 +2107,133 @@
           "frames"
         ],
         "title": "PoseTimeline",
+        "type": "object"
+      },
+      "PostureAspect": {
+        "additionalProperties": false,
+        "properties": {
+          "correctionCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correctioncode"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "points": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Points"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "unit": {
+            "enum": [
+              "deg",
+              "torso_length_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "points",
+          "correctionCode",
+          "reason",
+          "unit"
+        ],
+        "title": "PostureAspect",
+        "type": "object"
+      },
+      "PostureAssessment": {
+        "additionalProperties": false,
+        "description": "Experimental reference points; separate from similarity/manual Coach scores.",
+        "properties": {
+          "aspects": {
+            "items": {
+              "$ref": "#/components/schemas/PostureAspect"
+            },
+            "title": "Aspects",
+            "type": "array"
+          },
+          "maxPoints": {
+            "const": 100,
+            "default": 100,
+            "title": "Maxpoints",
+            "type": "integer"
+          },
+          "points": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Points"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "rubricVersion": {
+            "const": "posture-reference-v1",
+            "default": "posture-reference-v1",
+            "title": "Rubricversion",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "assessed",
+              "partial",
+              "not_assessable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "points",
+          "reason",
+          "aspects"
+        ],
+        "title": "PostureAssessment",
         "type": "object"
       },
       "ProfileOut": {

@@ -183,3 +183,11 @@ Worker/API pada branch integrasi mendukung analisis temporal dengan pilihan
 Ikuti [kontrak aditif dan urutan integrasi](coach-reference-api.md#hasil-evaluasi-dan-overlay).
 Mode ini opt-in; jangan menganggap fitur sudah aktif di Vercel atau skor telah
 tervalidasi. Field dan endpoint legacy tetap tersedia.
+
+## Tambahan penilaian postur eksperimen (25 November 2026)
+
+`coachComparison.postureAssessment` kini dihitung saat evaluasi dibaca; kontrak
+request tidak berubah. Lihat [rubrik, status, alasan dan kode koreksi](posture-assessment.md)
+serta [tiga contoh fragmen respons](posture-assessment-examples.json). Poin ini
+terpisah dari `score` utama dan penilaian manual Coach. Total nullable; FE perlu
+menampilkan alasan aspek yang tidak dapat dinilai, bukan menggantinya dengan 0.

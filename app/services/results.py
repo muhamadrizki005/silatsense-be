@@ -2,6 +2,7 @@ from sqlalchemy import select
 
 from app.core.errors import DomainError
 from app.intelligence.features.presentation import metadata
+from app.intelligence.posture_assessment import assess_posture
 from app.models.entities import AnalysisJob, EvaluationSession, MediaAsset, TrainingSession, now
 from app.schemas.results import AcknowledgedOut, EvaluationOut, PoseOut
 from app.services.sessions import _authorized_lock, get_session, identifier
@@ -30,6 +31,13 @@ def read_evaluation(db, owner_id, value):
 
 def evaluation_out(session, row):
     data = row.result_json
+    comparison = data.get("coach_comparison")
+    if comparison is not None:
+        # Derived on every read: legacy results benefit without schema/data writes.
+        # Ignore any previously cached assessment, keeping the policy version explicit.
+        comparison = {**comparison, "postureAssessment": assess_posture(
+            comparison, data.get("pose_timeline")
+        )}
     analysis, model = data["analysis"], data["model"]
     index, seconds = analysis.get("key_frame"), analysis.get("key_frame_time")
     keyframe = dict(index=index, timeSeconds=seconds) if index is not None and seconds is not None else None
@@ -69,7 +77,7 @@ def evaluation_out(session, row):
         validPoseFrames=analysis["valid_pose_frames"], featuresCompared=analysis.get("features_compared"),
         keyFrame=keyframe, measurements=data.get("measurements", []), issues=issues,
         unavailableReasons=reasons,
-        coachComparison=data.get("coach_comparison"),
+        coachComparison=comparison,
     )
 
 
