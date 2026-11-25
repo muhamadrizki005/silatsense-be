@@ -328,7 +328,11 @@ def test_legacy_backfill_on_authenticated_evaluation_history_and_coach_reads(
         owner = db.scalar(select(TrainingSession.user_id))
         db.commit()
         assign_coach(db, owner, 1, "test-admin", "Read-time assessment access")
-    before = copy.deepcopy(data)
+    # Compare persisted JSON before/after the reads. MySQL normalizes binary JSON
+    # numbers (e.g. 1.4000000000000001 -> 1.4), unlike SQLite's text JSON. A fresh
+    # session avoids comparing the in-memory pre-serialization fixture to MySQL.
+    with uploads[1]() as db:
+        before = copy.deepcopy(db.scalar(select(EvaluationSession)).result_json)
     evaluation = client.get(accepted["evaluationUrl"], headers=member).json()
     expected = evaluation["coachComparison"]["postureAssessment"]
     assert expected["points"] == 100 and evaluation["score"] is None
