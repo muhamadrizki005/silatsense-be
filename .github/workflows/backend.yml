@@ -44,6 +44,11 @@ jobs:
         run: >-
           python -m ruff format --check app/db/session.py app/core/error_metadata.py
           scripts/db_status.py tests/test_db_pooling.py tests/test_worker_errors.py
+      - name: Format experimental posture assessment
+        run: >-
+          python -m ruff format --check app/intelligence/posture_rubric.py
+          app/intelligence/posture_assessment.py app/schemas/temporal.py
+          tests/test_posture_assessment.py tests/test_posture_private_references.py
       - name: Fresh disposable schemas
         run: |
           python - <<'PY'

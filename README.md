@@ -2,9 +2,14 @@
 
 **23 November 2026 — integrasi analyzer Coach pada branch terpisah:** worker/API
 mendukung perbandingan urutan 12 gerakan, target `movementId`, dan timeline pose
-untuk overlay FE. Default tetap analyzer statis; mode baru opt-in, hasil tidak
-menjadi skor/keputusan benar-salah. [Kontrak dan setup worker](docs/coach-reference-api.md)
+untuk overlay FE. Default tetap analyzer statis; mode baru opt-in, `score` utama
+tetap terpisah dari poin postur eksperimen dan bukan keputusan benar-salah resmi.
+[Kontrak dan setup worker](docs/coach-reference-api.md)
 serta [bukti pengujian](docs/coach-reference-verification.md). Belum diaktifkan di deployment.
+
+**25 November 2026:** [penilaian postur eksperimen untuk 12 target](docs/posture-assessment.md)
+tersedia melalui `coachComparison.postureAssessment`, dihitung dari frame tersimpan
+saat membaca evaluasi. [Contoh respons](docs/posture-assessment-examples.json).
 
 Integrasi storage privat B2 dan alur direct upload: [panduan B2](docs/b2-storage.md).
 Mode native tetap memakai `STORAGE_ADAPTER=local`; mode B2 memerlukan migrasi

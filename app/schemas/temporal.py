@@ -43,6 +43,25 @@ class FeatureSummary(FiniteModel):
     colorCounts: dict[str, int]
 
 
+class PostureAspect(FiniteModel):
+    id: str
+    points: int | None = Field(ge=0, le=100)
+    correctionCode: str | None
+    reason: str | None
+    unit: Literal["deg", "torso_length_ratio"]
+
+
+class PostureAssessment(FiniteModel):
+    """Experimental reference points; separate from similarity/manual Coach scores."""
+
+    status: Literal["assessed", "partial", "not_assessable"]
+    points: float | None = Field(ge=0, le=100)
+    maxPoints: Literal[100] = 100
+    reason: str | None
+    aspects: list[PostureAspect]
+    rubricVersion: Literal["posture-reference-v1"] = "posture-reference-v1"
+
+
 class CoachComparison(FiniteModel):
     movementId: MovementId
     status: Literal["compared", "not_assessable"]
@@ -56,6 +75,10 @@ class CoachComparison(FiniteModel):
     semanticPhasesAvailable: bool = False
     frames: list[ComparisonFrame] = Field(max_length=32)
     features: dict[str, FeatureSummary]
+    postureAssessment: PostureAssessment | None = Field(
+        default=None,
+        description="Computed on evaluation read from stored paired frames. Experimental equal-weight points, not an official correctness verdict or manual Coach assessment.",
+    )
 
 
 class TimelineLandmark(FiniteModel):

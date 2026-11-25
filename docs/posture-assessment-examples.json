@@ -1,0 +1,119 @@
+{
+  "withCorrection": {
+    "score": null,
+    "coachComparison": {
+      "movementId": "kuda_kuda_samping",
+      "score": null,
+      "correctness": null,
+      "qualityAssessmentValidated": false,
+      "postureAssessment": {
+        "status": "assessed",
+        "points": 95.0,
+        "maxPoints": 100,
+        "reason": null,
+        "aspects": [
+          {
+            "id": "bent_knee",
+            "points": 85,
+            "correctionCode": "knee_bend_insufficient",
+            "reason": null,
+            "unit": "deg"
+          },
+          {
+            "id": "other_leg_extension",
+            "points": 100,
+            "correctionCode": null,
+            "reason": null,
+            "unit": "deg"
+          },
+          {
+            "id": "stance_width",
+            "points": 100,
+            "correctionCode": null,
+            "reason": null,
+            "unit": "torso_length_ratio"
+          }
+        ],
+        "rubricVersion": "posture-reference-v1"
+      }
+    }
+  },
+  "withoutCorrection": {
+    "score": null,
+    "coachComparison": {
+      "movementId": "kuda_kuda_samping",
+      "score": null,
+      "correctness": null,
+      "qualityAssessmentValidated": false,
+      "postureAssessment": {
+        "status": "assessed",
+        "points": 100.0,
+        "maxPoints": 100,
+        "reason": null,
+        "aspects": [
+          {
+            "id": "bent_knee",
+            "points": 100,
+            "correctionCode": null,
+            "reason": null,
+            "unit": "deg"
+          },
+          {
+            "id": "other_leg_extension",
+            "points": 100,
+            "correctionCode": null,
+            "reason": null,
+            "unit": "deg"
+          },
+          {
+            "id": "stance_width",
+            "points": 100,
+            "correctionCode": null,
+            "reason": null,
+            "unit": "torso_length_ratio"
+          }
+        ],
+        "rubricVersion": "posture-reference-v1"
+      }
+    }
+  },
+  "notAssessable": {
+    "score": null,
+    "coachComparison": {
+      "movementId": "kuda_kuda_samping",
+      "score": null,
+      "correctness": null,
+      "qualityAssessmentValidated": false,
+      "postureAssessment": {
+        "status": "not_assessable",
+        "points": null,
+        "maxPoints": 100,
+        "reason": "required_aspect_unavailable",
+        "aspects": [
+          {
+            "id": "bent_knee",
+            "points": null,
+            "correctionCode": null,
+            "reason": "camera_or_pose_inadequate",
+            "unit": "deg"
+          },
+          {
+            "id": "other_leg_extension",
+            "points": null,
+            "correctionCode": null,
+            "reason": "camera_or_pose_inadequate",
+            "unit": "deg"
+          },
+          {
+            "id": "stance_width",
+            "points": null,
+            "correctionCode": null,
+            "reason": "camera_or_pose_inadequate",
+            "unit": "torso_length_ratio"
+          }
+        ],
+        "rubricVersion": "posture-reference-v1"
+      }
+    }
+  }
+}
