@@ -33,14 +33,21 @@ def evaluation_out(session, row):
     analysis, model = data["analysis"], data["model"]
     index, seconds = analysis.get("key_frame"), analysis.get("key_frame_time")
     keyframe = dict(index=index, timeSeconds=seconds) if index is not None and seconds is not None else None
-    reasons = ["repetition_count_not_supported", "temporal_analysis_not_supported"]
+    temporal = analysis.get("method") == "coach-reference-dtw"
+    reasons = ["repetition_count_not_supported"]
+    if not temporal:
+        reasons.append("temporal_analysis_not_supported")
+    else:
+        reasons.append("correctness_not_validated")
+        if not (data.get("coach_comparison") or {}).get("semanticPhasesAvailable"):
+            reasons.append("semantic_phases_not_annotated")
     if keyframe is None:
         reasons.append("keyframe_unavailable")
     if analysis.get("features_compared") is None:
         reasons.append("features_compared_unavailable")
     if "measurements" not in data:
         reasons.append("measurements_not_stored")
-    if not data.get("pose"):
+    if not data.get("pose") and not (data.get("pose_timeline") or {}).get("frames"):
         reasons.append("pose_not_stored" if "pose" not in data else "pose_unavailable")
     if model.get("feature_version") is None:
         reasons.append("feature_version_not_stored")
@@ -54,21 +61,25 @@ def evaluation_out(session, row):
         id=str(row.id), sessionId=str(session.id),
         movementSlug="kuda-kuda" if row.movement == "kuda_kuda" else row.movement,
         evaluatedAt=row.created_at, analysisStatus=row.status, score=row.score,
-        scoreReason=None if row.score is not None else row.status,
+        scoreReason=None if row.score is not None else "correctness_not_validated" if row.status == "reference_compared" else row.status,
+        method=analysis.get("method", "static-reference-pose"),
         matchedVariant=row.matched_variant, analyzerVersion=row.analyzer_version,
         featureVersion=model.get("feature_version"), referenceVersion=row.reference_version,
         poseStatus=data["pose_status"], framesProcessed=analysis["frames_processed"],
         validPoseFrames=analysis["valid_pose_frames"], featuresCompared=analysis.get("features_compared"),
         keyFrame=keyframe, measurements=data.get("measurements", []), issues=issues,
         unavailableReasons=reasons,
+        coachComparison=data.get("coach_comparison"),
     )
 
 
 def read_pose(db, owner_id, value):
     session, row = completed_evaluation(db, owner_id, value)
     pose = row.result_json.get("pose")
+    timeline = row.result_json.get("pose_timeline")
     return PoseOut(sessionId=str(session.id), pose=pose,
-                   reason=None if pose else "pose_not_stored" if "pose" not in row.result_json else "pose_unavailable")
+                   timeline=timeline,
+                   reason=None if pose or timeline and timeline.get("frames") else "pose_not_stored" if "pose" not in row.result_json else "pose_unavailable")
 
 
 def acknowledge(db, user, value):

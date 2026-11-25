@@ -1,12 +1,22 @@
 """Read-only queue diagnostics; outputs counts/lease state, no personal data."""
 
 import json
-from sqlalchemy import select, func
-from app.db.session import SessionLocal
-from app.models.entities import AnalysisJob, now
+import argparse
+from scripts.process_env import load_private_env
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--env-file")
+    args = parser.parse_args()
+    try:
+        load_private_env(args.env_file)
+    except ValueError as error:
+        parser.error(str(error))
+    from sqlalchemy import select, func
+    from app.db.session import SessionLocal
+    from app.models.entities import AnalysisJob, now
+
     with SessionLocal() as db:
         counts = dict(
             db.execute(

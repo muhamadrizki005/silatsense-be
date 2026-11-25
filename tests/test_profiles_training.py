@@ -193,7 +193,11 @@ def test_catalog_empty_guidance_slug_and_config(client, member, monkeypatch):
     config = client.get("/api/v1/member/record-config/kuda-kuda", headers=member).json()
     assert config == {"movementSlug": "kuda-kuda", "acceptedMimeTypes": ["video/mp4", "video/quicktime", "video/webm"],
                       "maxBytes": 20 * 1024 * 1024, "maxDurationSeconds": 15,
-                      "retentionSeconds": 86400, "recommendedDurationSeconds": None}
+                      "retentionSeconds": 86400, "recommendedDurationSeconds": None,
+                      "movementIdRequired": False, "analysisMethod": "static-reference-pose",
+                      "movements": [{"id": "kuda_kuda_tengah", "name": "Kuda-kuda tengah"},
+                                    {"id": "kuda_kuda_depan", "name": "Kuda-kuda depan"},
+                                    {"id": "kuda_kuda_samping", "name": "Kuda-kuda samping"}]}
     for slug in ["kuda_kuda", "unknown"]:
         assert_domain_error(client.get(f"/api/v1/member/training-prep/{slug}", headers=member), 404, "not_found")
     with database() as db:

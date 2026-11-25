@@ -236,6 +236,17 @@
       },
       "Body_upload_session_api_v1_member_sessions_post": {
         "properties": {
+          "movementId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Movementid"
+          },
           "movementSlug": {
             "title": "Movementslug",
             "type": "string"
@@ -268,15 +279,21 @@
         "additionalProperties": false,
         "properties": {
           "method": {
-            "const": "static-reference-pose",
             "default": "static-reference-pose",
+            "enum": [
+              "static-reference-pose",
+              "coach-reference-dtw"
+            ],
             "title": "Method",
             "type": "string"
           },
           "reason": {
             "anyOf": [
               {
-                "const": "reference_not_ready",
+                "enum": [
+                  "reference_not_ready",
+                  "correctness_not_validated"
+                ],
                 "type": "string"
               },
               {
@@ -284,6 +301,11 @@
               }
             ],
             "title": "Reason"
+          },
+          "referenceComparisonAvailable": {
+            "default": false,
+            "title": "Referencecomparisonavailable",
+            "type": "boolean"
           },
           "referenceVersions": {
             "items": {
@@ -309,6 +331,113 @@
           "referenceVersions"
         ],
         "title": "Capability",
+        "type": "object"
+      },
+      "CoachComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "alignmentDistance": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alignmentdistance"
+          },
+          "correctness": {
+            "title": "Correctness",
+            "type": "null"
+          },
+          "experimental": {
+            "const": true,
+            "default": true,
+            "title": "Experimental",
+            "type": "boolean"
+          },
+          "features": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FeatureSummary"
+            },
+            "title": "Features",
+            "type": "object"
+          },
+          "frames": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonFrame"
+            },
+            "maxItems": 32,
+            "title": "Frames",
+            "type": "array"
+          },
+          "movementId": {
+            "enum": [
+              "pukulan_depan",
+              "pukulan_melingkar",
+              "pukulan_bandul",
+              "tendangan_depan",
+              "tendangan_sabit",
+              "tendangan_t",
+              "kuda_kuda_tengah",
+              "kuda_kuda_depan",
+              "kuda_kuda_samping",
+              "tangkisan_atas",
+              "tangkisan_dalam",
+              "tangkisan_bawah"
+            ],
+            "title": "Movementid",
+            "type": "string"
+          },
+          "qualityAssessmentValidated": {
+            "const": false,
+            "default": false,
+            "title": "Qualityassessmentvalidated",
+            "type": "boolean"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "score": {
+            "title": "Score",
+            "type": "null"
+          },
+          "semanticPhasesAvailable": {
+            "default": false,
+            "title": "Semanticphasesavailable",
+            "type": "boolean"
+          },
+          "status": {
+            "enum": [
+              "compared",
+              "not_assessable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "toleranceStatus": {
+            "title": "Tolerancestatus",
+            "type": "string"
+          }
+        },
+        "required": [
+          "movementId",
+          "status",
+          "toleranceStatus",
+          "frames",
+          "features"
+        ],
+        "title": "CoachComparison",
         "type": "object"
       },
       "CoachIdentity": {
@@ -505,6 +634,55 @@
           "feedbackDraft"
         ],
         "title": "CoachSessionDetail",
+        "type": "object"
+      },
+      "ComparisonFrame": {
+        "additionalProperties": false,
+        "properties": {
+          "features": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FeatureComparison"
+            },
+            "title": "Features",
+            "type": "object"
+          },
+          "joints": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JointComparison"
+            },
+            "title": "Joints",
+            "type": "object"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase"
+          },
+          "referenceTimeSeconds": {
+            "minimum": 0.0,
+            "title": "Referencetimeseconds",
+            "type": "number"
+          },
+          "timeSeconds": {
+            "minimum": 0.0,
+            "title": "Timeseconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "timeSeconds",
+          "referenceTimeSeconds",
+          "phase",
+          "features",
+          "joints"
+        ],
+        "title": "ComparisonFrame",
         "type": "object"
       },
       "DailyActivity": {
@@ -803,7 +981,8 @@
               "experimental",
               "reference_not_ready",
               "insufficient_pose",
-              "insufficient_features"
+              "insufficient_features",
+              "reference_compared"
             ],
             "title": "Analysisstatus",
             "type": "string"
@@ -811,6 +990,16 @@
           "analyzerVersion": {
             "title": "Analyzerversion",
             "type": "string"
+          },
+          "coachComparison": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CoachComparison"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "deviatedRepetitions": {
             "title": "Deviatedrepetitions",
@@ -887,8 +1076,11 @@
             "type": "array"
           },
           "method": {
-            "const": "static-reference-pose",
             "default": "static-reference-pose",
+            "enum": [
+              "static-reference-pose",
+              "coach-reference-dtw"
+            ],
             "title": "Method",
             "type": "string"
           },
@@ -993,6 +1185,156 @@
           "unavailableReasons"
         ],
         "title": "EvaluationOut",
+        "type": "object"
+      },
+      "FeatureComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "anyOf": [
+              {
+                "enum": [
+                  "green",
+                  "yellow",
+                  "red"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "deviation": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviation"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "referenceValue": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencevalue"
+          },
+          "unit": {
+            "enum": [
+              "deg",
+              "torso_length_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "referenceValue",
+          "deviation",
+          "unit",
+          "color",
+          "reason"
+        ],
+        "title": "FeatureComparison",
+        "type": "object"
+      },
+      "FeatureSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "colorCounts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Colorcounts",
+            "type": "object"
+          },
+          "coverage": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Coverage",
+            "type": "number"
+          },
+          "maximumDeviation": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximumdeviation"
+          },
+          "medianDeviation": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mediandeviation"
+          },
+          "sampleCount": {
+            "maximum": 32.0,
+            "minimum": 0.0,
+            "title": "Samplecount",
+            "type": "integer"
+          },
+          "unit": {
+            "enum": [
+              "deg",
+              "torso_length_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sampleCount",
+          "coverage",
+          "medianDeviation",
+          "maximumDeviation",
+          "unit",
+          "colorCounts"
+        ],
+        "title": "FeatureSummary",
         "type": "object"
       },
       "GuideItem": {
@@ -1132,6 +1474,112 @@
           "sessionCount"
         ],
         "title": "IssueCount",
+        "type": "object"
+      },
+      "JointComparison": {
+        "additionalProperties": false,
+        "properties": {
+          "color": {
+            "anyOf": [
+              {
+                "enum": [
+                  "green",
+                  "yellow",
+                  "red"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "deviation": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviation"
+          },
+          "feedbackCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feedbackcode"
+          },
+          "landmarkIndices": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 3,
+            "minItems": 3,
+            "title": "Landmarkindices",
+            "type": "array"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "referenceValue": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referencevalue"
+          },
+          "unit": {
+            "enum": [
+              "deg",
+              "torso_length_ratio"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "referenceValue",
+          "deviation",
+          "unit",
+          "color",
+          "reason",
+          "landmarkIndices",
+          "feedbackCode"
+        ],
+        "title": "JointComparison",
         "type": "object"
       },
       "KeyFrame": {
@@ -1433,6 +1881,39 @@
         "title": "MemberProfilePatch",
         "type": "object"
       },
+      "MovementOption": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "enum": [
+              "pukulan_depan",
+              "pukulan_melingkar",
+              "pukulan_bandul",
+              "tendangan_depan",
+              "tendangan_sabit",
+              "tendangan_t",
+              "kuda_kuda_tengah",
+              "kuda_kuda_depan",
+              "kuda_kuda_samping",
+              "tangkisan_atas",
+              "tangkisan_dalam",
+              "tangkisan_bawah"
+            ],
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "MovementOption",
+        "type": "object"
+      },
       "PasswordChange": {
         "additionalProperties": false,
         "examples": [
@@ -1550,6 +2031,16 @@
           "sessionId": {
             "title": "Sessionid",
             "type": "string"
+          },
+          "timeline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PoseTimeline"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -1558,6 +2049,53 @@
           "reason"
         ],
         "title": "PoseOut",
+        "type": "object"
+      },
+      "PoseTimeline": {
+        "additionalProperties": false,
+        "properties": {
+          "coordinateSystem": {
+            "const": "image-normalized",
+            "default": "image-normalized",
+            "title": "Coordinatesystem",
+            "type": "string"
+          },
+          "frames": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineFrame"
+            },
+            "maxItems": 900,
+            "title": "Frames",
+            "type": "array"
+          },
+          "imageHeight": {
+            "exclusiveMinimum": 0.0,
+            "title": "Imageheight",
+            "type": "integer"
+          },
+          "imageWidth": {
+            "exclusiveMinimum": 0.0,
+            "title": "Imagewidth",
+            "type": "integer"
+          },
+          "maximumInterpolationGapSeconds": {
+            "default": 0.15,
+            "title": "Maximuminterpolationgapseconds",
+            "type": "number"
+          },
+          "origin": {
+            "const": "top-left",
+            "default": "top-left",
+            "title": "Origin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "imageWidth",
+          "imageHeight",
+          "frames"
+        ],
+        "title": "PoseTimeline",
         "type": "object"
       },
       "ProfileOut": {
@@ -2471,6 +3009,74 @@
         "title": "TaskPatch",
         "type": "object"
       },
+      "TimelineFrame": {
+        "additionalProperties": false,
+        "properties": {
+          "frameIndex": {
+            "minimum": 0.0,
+            "title": "Frameindex",
+            "type": "integer"
+          },
+          "landmarks": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineLandmark"
+            },
+            "maxItems": 33,
+            "minItems": 1,
+            "title": "Landmarks",
+            "type": "array"
+          },
+          "timeSeconds": {
+            "minimum": 0.0,
+            "title": "Timeseconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "frameIndex",
+          "timeSeconds",
+          "landmarks"
+        ],
+        "title": "TimelineFrame",
+        "type": "object"
+      },
+      "TimelineLandmark": {
+        "additionalProperties": false,
+        "properties": {
+          "index": {
+            "maximum": 32.0,
+            "minimum": 0.0,
+            "title": "Index",
+            "type": "integer"
+          },
+          "visibility": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Visibility",
+            "type": "number"
+          },
+          "x": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "index",
+          "x",
+          "y",
+          "visibility"
+        ],
+        "title": "TimelineLandmark",
+        "type": "object"
+      },
       "TokenConfirm": {
         "additionalProperties": false,
         "properties": {
@@ -2618,6 +3224,15 @@
             "title": "Acceptedmimetypes",
             "type": "array"
           },
+          "analysisMethod": {
+            "default": "static-reference-pose",
+            "enum": [
+              "static-reference-pose",
+              "coach-reference-dtw"
+            ],
+            "title": "Analysismethod",
+            "type": "string"
+          },
           "maxBytes": {
             "title": "Maxbytes",
             "type": "integer"
@@ -2625,6 +3240,11 @@
           "maxDurationSeconds": {
             "title": "Maxdurationseconds",
             "type": "integer"
+          },
+          "movementIdRequired": {
+            "default": false,
+            "title": "Movementidrequired",
+            "type": "boolean"
           },
           "movementSlug": {
             "enum": [
@@ -2635,6 +3255,13 @@
             ],
             "title": "Movementslug",
             "type": "string"
+          },
+          "movements": {
+            "items": {
+              "$ref": "#/components/schemas/MovementOption"
+            },
+            "title": "Movements",
+            "type": "array"
           },
           "recommendedDurationSeconds": {
             "anyOf": [
@@ -2686,6 +3313,31 @@
             ],
             "title": "Mimetype",
             "type": "string"
+          },
+          "movementId": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pukulan_depan",
+                  "pukulan_melingkar",
+                  "pukulan_bandul",
+                  "tendangan_depan",
+                  "tendangan_sabit",
+                  "tendangan_t",
+                  "kuda_kuda_tengah",
+                  "kuda_kuda_depan",
+                  "kuda_kuda_samping",
+                  "tangkisan_atas",
+                  "tangkisan_dalam",
+                  "tangkisan_bawah"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Movementid"
           },
           "movementSlug": {
             "enum": [

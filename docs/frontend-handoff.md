@@ -1,5 +1,8 @@
 # Serah terima backend untuk frontend
 
+Tambahan 23 November 2026: [kontrak movementId, perbandingan temporal dan overlay](coach-reference-api.md)
+tersedia pada branch integrasi, belum diaktifkan di deployment.
+
 Pembaruan upload B2 6 November 2026: [alur upload dan playback untuk deployment](b2-storage.md).
 Mode B2 memerlukan dua request JSON API dan PUT video langsung ke storage;
 endpoint multipart pada panduan lama hanya berlaku untuk mode filesystem lokal.
@@ -172,3 +175,11 @@ alur tersebut sudah diuji dengan adapter memory/SMTP loopback.
 CI GitHub/container build belum dijalankan, staging/deployment belum tersedia,
 uji kapasitas 10–15 user dan validasi ilmiah belum dilakukan. Backend dapat
 dipush untuk kolaborasi/integrasi sekarang; hasil CI perlu diperiksa setelah push.
+
+## Tambahan integrasi Coach — 23 November 2026
+
+Worker/API pada branch integrasi mendukung analisis temporal dengan pilihan
+`movementId`, hasil `coachComparison` dan `pose.timeline`. FE belum diubah.
+Ikuti [kontrak aditif dan urutan integrasi](coach-reference-api.md#hasil-evaluasi-dan-overlay).
+Mode ini opt-in; jangan menganggap fitur sudah aktif di Vercel atau skor telah
+tervalidasi. Field dan endpoint legacy tetap tersedia.

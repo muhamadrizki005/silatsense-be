@@ -3,16 +3,27 @@ import logging
 import signal
 from threading import Event
 
-from app.core.config import settings
-from app.db.session import SessionLocal
-from app.services.cleanup import cleanup_once
+from scripts.process_env import load_private_env
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Expire private media and reconcile orphan uploads")
+    parser = argparse.ArgumentParser(
+        description="Expire private media and reconcile orphan uploads"
+    )
     parser.add_argument("--once", action="store_true")
+    parser.add_argument("--env-file")
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    try:
+        load_private_env(args.env_file)
+    except ValueError as error:
+        parser.error(str(error))
+    from app.core.config import settings
+    from app.db.session import SessionLocal
+    from app.services.cleanup import cleanup_once
+
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     stop = Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())

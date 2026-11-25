@@ -3,8 +3,8 @@
 import numpy as np
 
 from app.intelligence.features.biomechanics import angle
+from app.intelligence.coach_contracts import FEATURE_VERSION
 
-FEATURE_VERSION = "movement-image-features-v1"
 TRIPLES = {
     f"{side}_{joint}_deg": triple
     for side, s, e, w, h, k, a in (

@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_validator, model_validator
+from app.intelligence.coach_contracts import MovementId
 
 
 class DomainModel(BaseModel):
@@ -110,10 +111,11 @@ MovementSlug = Literal["kuda-kuda", "pukulan", "tangkisan", "tendangan"]
 
 class Capability(DomainModel):
     scoringAvailable: bool
-    reason: Literal["reference_not_ready"] | None
-    method: Literal["static-reference-pose"] = "static-reference-pose"
+    reason: Literal["reference_not_ready", "correctness_not_validated"] | None
+    method: Literal["static-reference-pose", "coach-reference-dtw"] = "static-reference-pose"
     referenceVersions: list[str]
     repetitionCountingAvailable: Literal[False] = False
+    referenceComparisonAvailable: bool = False
 
 
 class GuideItem(DomainModel):
@@ -143,6 +145,11 @@ class TrainingPrep(DomainModel):
     guides: list[GuideItem]
 
 
+class MovementOption(DomainModel):
+    id: MovementId
+    name: str
+
+
 class UploadConfig(DomainModel):
     movementSlug: MovementSlug
     acceptedMimeTypes: list[str]
@@ -150,6 +157,9 @@ class UploadConfig(DomainModel):
     maxDurationSeconds: int
     retentionSeconds: Literal[86400] = 86400
     recommendedDurationSeconds: int | None
+    movementIdRequired: bool = False
+    movements: list[MovementOption] = Field(default_factory=list)
+    analysisMethod: Literal["static-reference-pose", "coach-reference-dtw"] = "static-reference-pose"
 
 
 class ValidationIssue(DomainModel):

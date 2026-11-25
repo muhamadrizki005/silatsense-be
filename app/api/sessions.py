@@ -23,9 +23,10 @@ def upload_session(
     movementSlug: Annotated[str, Form()], video: Annotated[UploadFile, File()],
     idempotency_key: Annotated[str, Header(alias="Idempotency-Key", min_length=1, max_length=128)],
     retryOf: Annotated[str | None, Form()] = None,
+    movementId: Annotated[str | None, Form()] = None,
     user: User = Depends(member_user), db: Session = Depends(get_db),
 ):
-    return accept_upload(db, user, movementSlug, video, idempotency_key, retryOf)
+    return accept_upload(db, user, movementSlug, video, idempotency_key, retryOf, movementId)
 
 
 @router.get("/{session_id}", response_model=SessionOut)
